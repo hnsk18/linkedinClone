@@ -1,0 +1,284 @@
+/* My Network Page */
+.mynetwork-container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* Sidebar */
+.network-sidebar {
+  position: sticky;
+  top: 80px;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sidebar-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+}
+
+.sidebar-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #111;
+}
+
+.network-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.nav-link {
+  padding: 10px 12px;
+  color: #666;
+  text-decoration: none;
+  font-size: 14px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.nav-link:hover {
+  background: #f3f3f3;
+  color: #0a66c2;
+}
+
+.nav-link.active {
+  background: #e7f3ff;
+  color: #0a66c2;
+  font-weight: 600;
+}
+
+.pro-tip {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Main Content */
+.network-main {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.network-header {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.network-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #111;
+}
+
+.network-header p {
+  font-size: 14px;
+  color: #666;
+}
+
+/* Connections Grid */
+.connections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.connection-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.connection-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.avatar-large {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #0a66c2, #004182);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #111;
+}
+
+.connection-card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: #111;
+  line-height: 1.4;
+}
+
+.headline {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.mutual {
+  font-size: 12px;
+  color: #999;
+  margin: 0;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.connect-btn {
+  flex: 1;
+  padding: 10px 12px;
+  background: white;
+  border: 2px solid #0a66c2;
+  color: #0a66c2;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.connect-btn:hover {
+  background: #f0f7ff;
+}
+
+.connect-btn:active {
+  background: #e7f3ff;
+}
+
+.show-more-btn {
+  padding: 10px 8px;
+  background: #f3f3f3;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #666;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.show-more-btn:hover {
+  background: #efefef;
+}
+
+/* Show More Section */
+.show-more-section {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.show-more-primary {
+  padding: 12px 32px;
+  background: white;
+  border: 2px solid #0a66c2;
+  color: #0a66c2;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.show-more-primary:hover {
+  background: #f0f7ff;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .mynetwork-container {
+    grid-template-columns: 1fr;
+  }
+
+  .network-sidebar {
+    position: relative;
+    top: 0;
+  }
+
+  .connections-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .mynetwork-container {
+    padding: 16px 12px;
+    gap: 16px;
+  }
+
+  .network-header {
+    padding: 16px;
+  }
+
+  .network-header h1 {
+    font-size: 20px;
+  }
+
+  .connections-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .connection-card {
+    padding: 12px;
+  }
+
+  .card-actions {
+    flex-direction: column;
+  }
+
+  .connect-btn {
+    width: 100%;
+  }
+}
