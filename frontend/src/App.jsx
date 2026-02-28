@@ -7,11 +7,14 @@ import Home from "./pages/Home";
 import MyNetwork from "./pages/MyNetwork";
 import Jobs from "./pages/Jobs";
 import Messaging from "./pages/Messaging";
+import Notifications from "./pages/Notifications";
+import Profile from "./pages/Profile";
+import ForBusiness from "./pages/ForBusiness";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 function AppContent() {
   const location = useLocation();
-  const hideFooter = ["/home", "/mynetwork", "/jobs", "/messaging"].includes(location.pathname);
+  const hideFooter = ["/home", "/mynetwork", "/jobs", "/messaging", "/notifications", "/profile", "/forbusiness"].includes(location.pathname);
 
   return (
     <div className="app-root">
@@ -25,6 +28,9 @@ function AppContent() {
           <Route path="/mynetwork" element={<MyNetwork />} />
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/messaging" element={<Messaging />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/forbusiness" element={<ForBusiness />} />
         </Routes>
       </main>
       {!hideFooter && <Footer />}
