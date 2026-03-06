@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Navbar from "../components/Navbar";
 import "../styles/notifications.css";
 
 export default function Notifications() {
@@ -89,7 +90,9 @@ export default function Notifications() {
     : notifications.filter(n => n.type === filter);
 
   return (
-    <div className="notifications-container">
+    <div className="notifications-page-container">
+      <Navbar />
+      <div className="notifications-container">
       {/* Left Sidebar */}
       <aside className="notifications-sidebar">
         <div className="profile-banner">
@@ -238,6 +241,7 @@ export default function Notifications() {
           <p><img src="data:image/svg+xml,%3Csvg width='20' height='20' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%230a66c2' width='20' height='20'/%3E%3C/svg%3E" alt="LinkedIn" /> LinkedIn LinkedIn Corporation © 2026</p>
         </div>
       </aside>
+      </div>
     </div>
   );
 }

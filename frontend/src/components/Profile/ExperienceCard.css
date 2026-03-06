@@ -1,0 +1,97 @@
+/* src/components/Profile/ExperienceCard.css */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.section-header .card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--li-text-primary);
+}
+
+.section-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.experience-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.experience-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.org-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.experience-details {
+    flex: 1;
+}
+
+.role-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--li-text-primary);
+}
+
+.company-name {
+    font-size: 14px;
+    color: var(--li-text-primary);
+    margin-top: 2px;
+}
+
+.duration {
+    font-size: 14px;
+    color: var(--li-text-secondary);
+    margin-top: 2px;
+}
+
+.credential-id {
+    font-size: 14px;
+    color: var(--li-text-secondary);
+    margin-top: 2px;
+}
+
+.skills-used {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--li-text-primary);
+}
+
+.skill-icon {
+    color: var(--li-text-secondary);
+}
+
+.card-divider {
+    width: calc(100% - 48px);
+    margin: 0 auto;
+    height: 1px;
+    background-color: var(--li-border-light);
+}
+
+.mt-2 {
+    margin-top: 12px;
+}
+
+.credential-btn {
+    padding: 6px 16px;
+    font-size: 14px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+}

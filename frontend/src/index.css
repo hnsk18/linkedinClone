@@ -1,0 +1,55 @@
+:root {
+  --li-bg-primary: #F3F2EF;
+  --li-bg-white: #FFFFFF;
+  --li-text-primary: rgba(0, 0, 0, 0.9);
+  --li-text-secondary: rgba(0, 0, 0, 0.6);
+  --li-text-tertiary: rgba(0, 0, 0, 0.3);
+  --li-primary: #0A66C2;
+  --li-primary-hover: #004182;
+  --li-border: rgba(0, 0, 0, 0.08);
+  --li-border-light: rgba(0, 0, 0, 0.05);
+  --li-nav-bg: #FFFFFF;
+  --li-search-bg: #EDF3F8;
+  --li-green: #057642;
+  --li-font-family: -apple-system, system-ui, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', 'Fira Sans', Ubuntu, Oxygen, 'Oxygen Sans', Cantarell, 'Droid Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Lucida Grande', Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--li-font-family);
+  background-color: var(--li-bg-primary);
+  color: var(--li-text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  text-decoration: none;
+  color: var(--li-primary);
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.card {
+  background-color: var(--li-bg-white);
+  border-radius: 8px;
+  border: 1px solid var(--li-border);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.card-content {
+  padding: 24px;
+}

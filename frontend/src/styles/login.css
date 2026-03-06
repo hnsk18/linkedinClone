@@ -17,7 +17,7 @@ body {
 .nav-item:hover { color: #0a66c2; }
 .nav-item.active { color: #0a66c2; border-bottom-color: #0a66c2; }
 
-.site-main { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 90px 20px 140px; }
+.site-main { min-height: 100vh; }
 
 .site-footer { position: fixed; left: 0; right: 0; bottom: 0; padding: 18px 20px; }
 .footer-inner { max-width: 1100px; margin: 0 auto; }

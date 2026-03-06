@@ -1,0 +1,85 @@
+/* src/components/Profile/InterestsCard.css */
+.interests-card .card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--li-text-primary);
+    margin-bottom: 16px;
+}
+
+.interests-tabs {
+    display: flex;
+    gap: 24px;
+    border-bottom: 1px solid var(--li-border-light);
+    margin-bottom: 16px;
+}
+
+.interests-tabs .tab {
+    padding-bottom: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--li-text-secondary);
+    cursor: pointer;
+    position: relative;
+}
+
+.interests-tabs .tab.active {
+    color: var(--li-green);
+}
+
+.interests-tabs .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--li-green);
+}
+
+.interests-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.interest-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.interest-logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.interest-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--li-text-primary);
+}
+
+.interest-followers {
+    font-size: 14px;
+    color: var(--li-text-secondary);
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.interest-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    color: var(--li-text-secondary);
+    border: 1px solid var(--li-text-secondary);
+}
+
+.interest-btn:hover {
+    background-color: var(--li-border-light);
+    color: var(--li-text-primary);
+    border-color: var(--li-text-primary);
+}

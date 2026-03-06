@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Navbar from "../components/Navbar";
 import "../styles/messaging.css";
 
 export default function Messaging() {
@@ -87,7 +88,9 @@ export default function Messaging() {
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
 
   return (
-    <div className="messaging-container">
+    <div className="messaging-page-container">
+      <Navbar />
+      <div className="messaging-container">
       {/* Left Sidebar - Conversations List */}
       <aside className="messaging-sidebar">
         <div className="messaging-header">
@@ -168,6 +171,23 @@ export default function Messaging() {
               </div>
             )}
           </div>
+
+          {/* Composer area */}
+          <div className="message-composer">
+            <textarea
+              className="composer-input"
+              placeholder="Write a message..."
+              rows={2}
+            />
+            <div className="composer-footer">
+              <div className="composer-tools">
+                <button className="composer-icon-btn" type="button">🙂</button>
+                <button className="composer-icon-btn" type="button">GIF</button>
+                <button className="composer-icon-btn" type="button">📎</button>
+              </div>
+              <button className="send-btn" type="button">Send</button>
+            </div>
+          </div>
         </main>
       )}
 
@@ -196,6 +216,7 @@ export default function Messaging() {
         </div>
         <p className="copyright">LinkedIn © 2026</p>
       </aside>
+    </div>
     </div>
   );
 }
