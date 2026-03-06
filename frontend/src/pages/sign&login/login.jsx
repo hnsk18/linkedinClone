@@ -5,10 +5,34 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    console.log({ identifier, password });
-    alert("Sign in (client-only) — wire to backend to authenticate.");
+  
+    const response = await fetch("http://localhost:8080/api/users/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        email: identifier,
+        password: password
+      })
+    });
+  
+    const data = await response.json();
+  
+    if (data) {
+      alert("Login successful");
+      console.log(data);
+  
+      // optional: save user
+      localStorage.setItem("user", JSON.stringify(data));
+  
+      // redirect to feed
+      window.location.href = "/home";
+    } else {
+      alert("Invalid email or password");
+    }
   };
 
   return (

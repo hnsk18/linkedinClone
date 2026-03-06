@@ -1,0 +1,50 @@
+/* src/pages/HomePage.css */
+.home-page-container {
+    padding-top: 52px;
+    /* For fixed navbar */
+    min-height: 100vh;
+}
+
+.home-main-wrapper {
+    max-width: 1128px;
+    margin: 12px auto 24px;
+}
+
+.home-main-layout {
+    display: grid;
+    grid-template-columns: 225px minmax(0, 1fr) 315px;
+    gap: 24px;
+}
+
+@media (max-width: 1200px) {
+    .home-main-wrapper {
+        padding: 0 16px;
+    }
+}
+
+@media (max-width: 992px) {
+    .home-main-layout {
+        grid-template-columns: 225px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .home-main-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Common small utilities for home page components */
+.text-bold {
+    font-weight: 600;
+}
+
+.text-sm {
+    font-size: 12px;
+}
+
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
