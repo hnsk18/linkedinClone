@@ -1,13 +1,19 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { FaHome, FaUserFriends, FaBriefcase, FaCommentDots, FaBell, FaTh } from 'react-icons/fa';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { FaHome, FaUserFriends, FaBriefcase, FaCommentDots, FaBell, FaTh, FaSignOutAlt } from 'react-icons/fa';
 import { BsSearch } from 'react-icons/bs';
 import logo from '../images/logo.svg';
 import './Navbar.css';
 
 const Navbar = () => {
+    const navigate = useNavigate();
     const getNavLinkClass = ({ isActive }) =>
         `nav-item-main${isActive ? ' active' : ''}`;
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        navigate('/login', { replace: true });
+    };
 
     return (
         <nav className="navbar">
@@ -72,6 +78,12 @@ const Navbar = () => {
                     <li>
                         <button type="button" className="nav-item-main premium-link">
                             <span>Learning</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button type="button" className="nav-item-main logout-btn" onClick={handleLogout} title="Sign out">
+                            <FaSignOutAlt size={24} />
+                            <span>Logout</span>
                         </button>
                     </li>
                 </ul>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "../styles/messaging.css";
+import { useChat } from "../context/ChatContext";
 
 const conversationsMock = [
   {
@@ -55,8 +56,17 @@ const conversationsMock = [
 export default function MessagingDock() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Focused");
+  const [draft, setDraft] = useState("");
+
+  const { messages, sendMessage, currentUserEmail } = useChat();
 
   const toggleOpen = () => setIsOpen((prev) => !prev);
+
+  const handleSend = () => {
+    if (!draft.trim()) return;
+    sendMessage(draft);
+    setDraft("");
+  };
 
   return (
     <div className="messaging-dock">
@@ -105,21 +115,49 @@ export default function MessagingDock() {
           </div>
 
           <div className="dock-conversations">
-            {conversationsMock.map((c) => (
-              <div
-                key={c.id}
-                className={`dock-conversation ${c.unread ? "unread" : ""}`}
-              >
-                <div className="dock-conv-avatar">{c.avatar[0]}</div>
-                <div className="dock-conv-main">
-                  <div className="dock-conv-header-row">
-                    <span className="dock-conv-name">{c.name}</span>
-                    <span className="dock-conv-date">{c.date}</span>
+            {messages.slice(-5).map((m, idx) => {
+              const isMe =
+                m.senderEmail &&
+                currentUserEmail &&
+                m.senderEmail === currentUserEmail;
+              return (
+                <div
+                  key={m.id ?? idx}
+                  className={`dock-conversation ${isMe ? "sent" : "unread"}`}
+                >
+                  <div className="dock-conv-avatar">
+                    {(isMe ? "Me" : (m.senderEmail || "?")).charAt(0).toUpperCase()}
                   </div>
-                  <p className="dock-conv-preview">{c.preview}</p>
+                  <div className="dock-conv-main">
+                    <div className="dock-conv-header-row">
+                      <span className="dock-conv-name">
+                        {isMe ? "You" : m.senderEmail || "Unknown"}
+                      </span>
+                    </div>
+                    <p className="dock-conv-preview">{m.content}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+
+          <div className="dock-composer">
+            <input
+              type="text"
+              className="dock-input"
+              placeholder="Write a message…"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+            />
+            <button className="dock-send-btn" type="button" onClick={handleSend}>
+              Send
+            </button>
           </div>
         </div>
       )}

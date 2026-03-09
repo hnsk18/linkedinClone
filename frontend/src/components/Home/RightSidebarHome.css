@@ -3,6 +3,16 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    position: sticky;
+    top: 64px; /* below fixed navbar */
+    align-self: flex-start;
+}
+
+@media (max-width: 992px) {
+    .home-left-sidebar,
+    .home-right-sidebar {
+        position: static;
+    }
 }
 
 .news-card .card-content {

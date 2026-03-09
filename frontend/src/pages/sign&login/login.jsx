@@ -1,37 +1,48 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function Login() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
 
+  useEffect(() => {
+    if (localStorage.getItem("token")) {
+      window.location.href = "/home";
+    }
+  }, []);
+
   const submit = async (e) => {
     e.preventDefault();
   
-    const response = await fetch("http://localhost:8080/api/users/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        email: identifier,
-        password: password
-      })
-    });
+    try {
+      const response = await fetch("http://localhost:8080/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: identifier,
+          password: password
+        })
+      });
   
-    const data = await response.json();
+      if (!response.ok) {
+        alert("Invalid credentials");
+        return;
+      }
   
-    if (data) {
-      alert("Login successful");
-      console.log(data);
+      const token = await response.text();
   
-      // optional: save user
-      localStorage.setItem("user", JSON.stringify(data));
+      console.log("JWT Token:", token);
   
-      // redirect to feed
+      // store token
+      localStorage.setItem("token", token);
+  
       window.location.href = "/home";
-    } else {
-      alert("Invalid email or password");
+  
+    } catch (error) {
+      console.error(error);
+      alert("Server error");
     }
   };
 

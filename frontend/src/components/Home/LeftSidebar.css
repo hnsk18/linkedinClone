@@ -3,6 +3,9 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
+    position: sticky;
+    top: 64px; /* below fixed navbar */
+    align-self: flex-start;
 }
 
 .profile-summary-card {

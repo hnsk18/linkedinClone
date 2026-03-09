@@ -1,13 +1,41 @@
 import React, { useState } from "react";
 
 export default function Register() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [location, setLocation] = useState("");
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    console.log({ email, password });
-    alert("Agree & Join (client-only). Connect to backend to complete registration.");
+
+    try {
+      const response = await fetch("http://localhost:8080/api/users/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email,
+          password,
+          ...(location.trim() && { location: location.trim() }),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Register error:", errorText);
+        alert("Registration failed");
+        return;
+      }
+
+      alert("Registration successful. Please sign in.");
+      window.location.href = "/login";
+    } catch (error) {
+      console.error(error);
+      alert("Server error");
+    }
   };
 
   return (
@@ -16,6 +44,16 @@ export default function Register() {
         <h2 className="join-title">Join LinkUp</h2>
 
         <form className="join-form" onSubmit={submit}>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            placeholder="Your name"
+            className="text-input"
+            minLength={1}
+          />
+
           <input
             type="email"
             value={email}
@@ -31,6 +69,14 @@ export default function Register() {
             onChange={(e) => setPassword(e.target.value)}
             required
             placeholder="Password (6+ characters)"
+            className="text-input"
+          />
+
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Location (optional)"
             className="text-input"
           />
 

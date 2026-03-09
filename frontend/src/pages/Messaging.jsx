@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import "../styles/messaging.css";
+import { useChat } from "../context/ChatContext";
 
 export default function Messaging() {
   const [selectedConversationId, setSelectedConversationId] = useState(1);
   const [activeTab, setActiveTab] = useState("Focused");
+  const [draft, setDraft] = useState("");
+
+  const { messages, sendMessage, currentUserEmail, connected } = useChat();
 
   const conversations = [
     {
@@ -63,35 +67,25 @@ export default function Messaging() {
     }
   ];
 
-  const messages = [
-    {
-      id: 1,
-      sender: "IFC Health",
-      avatar: "IF",
-      content: "Why Enroll?",
-      timestamp: "Today",
-      details: [
-        "Access courses anytime, anywhere, at your own pace and at no cost",
-        "Earn a certificate to demonstrate your commitment to healthcare ethics",
-        "It's free thanks to generous support of the Government of Tokyo",
-        "",
-        "We look forward to supporting your professional growth. Join the 100M+ health professionals who participated in free IFH online healthcare training.",
-        "",
-        "If you have questions or difficulties registering on the online training platform, please send an email to ephealthteam@ifc.org"
-      ],
-      buttons: ["Register Now", "Browse Courses", "Visit Our Website", "Maybe Later", "Not interested"],
-      isSponsored: true
-    }
-  ];
+  const handleSend = () => {
+    if (!draft.trim()) return;
+    sendMessage(draft);
+    setDraft("");
+  };
 
-  const selectedMessage = messages[0];
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
   const selectedConversation = conversations.find(c => c.id === selectedConversationId);
 
   return (
     <div className="messaging-page-container">
       <Navbar />
       <div className="messaging-container">
-      {/* Left Sidebar - Conversations List */}
+      {/* Left Sidebar - Conversations List (still static UI) */}
       <aside className="messaging-sidebar">
         <div className="messaging-header">
           <h2>Messaging</h2>
@@ -138,12 +132,11 @@ export default function Messaging() {
       </aside>
 
       {/* Main Content - Message Thread */}
-      {selectedMessage && (
         <main className="messaging-main">
           <div className="message-thread-header">
             <div className="thread-info">
-              <div className="thread-avatar">{selectedMessage.avatar}</div>
-              <h3>{selectedMessage.sender}</h3>
+              <div className="thread-avatar">G</div>
+              <h3>Global chat</h3>
             </div>
             <div className="thread-actions">
               <button className="icon-btn">⋯</button>
@@ -151,25 +144,33 @@ export default function Messaging() {
             </div>
           </div>
 
-          <div className="message-content">
-            <div className="message-body">
-              <h4>{selectedMessage.content}</h4>
-              {selectedMessage.details.map((detail, idx) => (
-                <div key={idx}>
-                  {detail && <p>{detail}</p>}
-                </div>
-              ))}
+          <div className="message-content chat-thread">
+            <div className="chat-messages">
+              {!connected && (
+                <div className="chat-status">Connecting to chat…</div>
+              )}
+              {messages.map((m, idx) => {
+                const isMe =
+                  m.senderEmail &&
+                  currentUserEmail &&
+                  m.senderEmail === currentUserEmail;
+                return (
+                  <div
+                    key={m.id ?? idx}
+                    className={`chat-message ${isMe ? "sent" : "received"}`}
+                  >
+                    <div className="chat-bubble">
+                      {!isMe && (
+                        <div className="chat-meta">
+                          {m.senderEmail || "Unknown"}
+                        </div>
+                      )}
+                      <div className="chat-text">{m.content}</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-
-            {selectedMessage.isSponsored && (
-              <div className="message-actions">
-                {selectedMessage.buttons.map((button, idx) => (
-                  <button key={idx} className="action-btn">
-                    {button}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Composer area */}
@@ -178,6 +179,9 @@ export default function Messaging() {
               className="composer-input"
               placeholder="Write a message..."
               rows={2}
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={handleKeyDown}
             />
             <div className="composer-footer">
               <div className="composer-tools">
@@ -185,11 +189,10 @@ export default function Messaging() {
                 <button className="composer-icon-btn" type="button">GIF</button>
                 <button className="composer-icon-btn" type="button">📎</button>
               </div>
-              <button className="send-btn" type="button">Send</button>
+              <button className="send-btn" type="button" onClick={handleSend}>Send</button>
             </div>
           </div>
         </main>
-      )}
 
       {/* Right Sidebar - Info/Ads */}
       <aside className="messaging-right">

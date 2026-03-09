@@ -162,6 +162,10 @@
     text-decoration: underline;
 }
 
+.logout-btn:hover {
+    color: #CC1016;
+}
+
 .logo-wrapper {
     display: flex;
     align-items: center;
