@@ -21,7 +21,14 @@ public class UserService {
         if(user.getName() == null || user.getName().isBlank()){
             throw new RuntimeException("Name is required");
         }
-        if(userRepository.findByEmail(user.getEmail()) != null){
+        if (user.getEmail() == null || user.getEmail().isBlank()) {
+            throw new RuntimeException("Email is required");
+        }
+
+        String normalizedEmail = user.getEmail().trim().toLowerCase();
+        user.setEmail(normalizedEmail);
+
+        if(userRepository.findByEmailIgnoreCase(normalizedEmail) != null){
             throw new RuntimeException("Email already exists");
         }
 
@@ -33,16 +40,55 @@ public class UserService {
     // LOGIN
     public User login(String email, String password){
 
-        User user = userRepository.findByEmail(email);
+        if (email == null || password == null) {
+            return null;
+        }
+
+        String normalizedEmail = email.trim().toLowerCase();
+        String rawPassword = password;
+
+        User user = userRepository.findByEmailIgnoreCase(normalizedEmail);
 
         if(user == null){
             return null;
         }
 
-        if(!passwordEncoder.matches(password, user.getPassword())){
+        String stored = user.getPassword();
+        if (stored == null) {
             return null;
         }
 
+        boolean looksBcrypt = stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$");
+        if (looksBcrypt) {
+            if (!passwordEncoder.matches(rawPassword, stored)) {
+                return null;
+            }
+        } else {
+            // Backward-compatible login for older plaintext-stored passwords.
+            // If it matches, upgrade it to bcrypt.
+            if (!stored.equals(rawPassword)) {
+                return null;
+            }
+            user.setPassword(passwordEncoder.encode(rawPassword));
+            userRepository.save(user);
+        }
+
         return user;
+    }
+
+    public User updateIntro(Long userId, User patch) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (patch.getName() != null) user.setName(patch.getName());
+        if (patch.getHeadline() != null) user.setHeadline(patch.getHeadline());
+        if (patch.getLocation() != null) user.setLocation(patch.getLocation());
+        if (patch.getAbout() != null) user.setAbout(patch.getAbout());
+        if (patch.getCollege() != null) user.setCollege(patch.getCollege());
+        if (patch.getProfilePicture() != null) user.setProfilePicture(patch.getProfilePicture());
+        if (patch.getCoverPicture() != null) user.setCoverPicture(patch.getCoverPicture());
+        if (patch.getConnectionsCount() != null) user.setConnectionsCount(patch.getConnectionsCount());
+
+        return userRepository.save(user);
     }
 }

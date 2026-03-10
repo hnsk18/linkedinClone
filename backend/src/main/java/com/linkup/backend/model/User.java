@@ -1,6 +1,8 @@
 package com.linkup.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 public class User {
@@ -10,13 +12,41 @@ public class User {
     private Long id;
 
     private String name;
+
     @Column(unique = true)
     private String email;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
     private String headline;
+
     private String location;
 
+    private String profilePicture;
+
+    private String coverPicture;
+
+    @Column(columnDefinition = "TEXT")
+    private String about;
+
+    private String college;
+
+    private Integer connectionsCount;
+
+    private LocalDateTime createdAt;
+
     public User() {}
+
+    @PrePersist
+    public void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (connectionsCount == null) {
+            connectionsCount = 0;
+        }
+    }
 
     public Long getId() {
         return id;
@@ -64,5 +94,53 @@ public class User {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getProfilePicture() {
+        return profilePicture;
+    }
+
+    public void setProfilePicture(String profilePicture) {
+        this.profilePicture = profilePicture;
+    }
+
+    public String getCoverPicture() {
+        return coverPicture;
+    }
+
+    public void setCoverPicture(String coverPicture) {
+        this.coverPicture = coverPicture;
+    }
+
+    public String getAbout() {
+        return about;
+    }
+
+    public void setAbout(String about) {
+        this.about = about;
+    }
+
+    public String getCollege() {
+        return college;
+    }
+
+    public void setCollege(String college) {
+        this.college = college;
+    }
+
+    public Integer getConnectionsCount() {
+        return connectionsCount;
+    }
+
+    public void setConnectionsCount(Integer connectionsCount) {
+        this.connectionsCount = connectionsCount;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
     }
 }

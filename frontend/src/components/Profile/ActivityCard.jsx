@@ -2,7 +2,10 @@ import React from 'react';
 import { FaPen, FaArrowRight, FaThumbsUp, FaComment } from 'react-icons/fa';
 import './ActivityCard.css';
 
-const ActivityCard = () => {
+const ActivityCard = ({ user, posts }) => {
+    const name = user?.name || 'You';
+    const firstPost = posts && posts.length > 0 ? posts[0] : null;
+
     return (
         <div className="card activity-card">
             <div className="card-content">
@@ -23,20 +26,30 @@ const ActivityCard = () => {
                     <button className="pill-outline">Videos</button>
                 </div>
 
-                <div className="activity-post-preview">
-                    <p className="post-meta">hemanth naga sai kumar posted this · 3mo</p>
-                    <div className="post-summary">
-                        <img src="https://via.placeholder.com/64" alt="Post thumbnail" className="post-thumbnail" />
-                        <div className="post-text">
-                            <p>🚀 Built a Gesture-Controlled Racing Game Interface! 🎮</p>
-                            <p>I've been experimenting with computer vision and human-computer interaction, and I built a real-time gesture control system using... <span className="show-more">show more</span></p>
+                {firstPost ? (
+                    <div className="activity-post-preview">
+                        <p className="post-meta">
+                            {name} posted this · {new Date(firstPost.createdAt).toLocaleDateString()}
+                        </p>
+                        <div className="post-summary">
+                            <div className="post-text">
+                                <p>{firstPost.content?.slice(0, 120) || 'Post content'}</p>
+                            </div>
+                        </div>
+                        <div className="post-stats">
+                            <span className="stat-likes">
+                                <FaThumbsUp className="like-icon" /> {/* likes not tracked yet */}
+                            </span>
+                            <span className="stat-comments">
+                                <FaComment className="like-icon" /> {/* comments not tracked yet */}
+                            </span>
                         </div>
                     </div>
-                    <div className="post-stats">
-                        <span className="stat-likes"><FaThumbsUp className="like-icon" /> 36</span>
-                        <span className="stat-comments">3 comments</span>
+                ) : (
+                    <div className="activity-post-preview">
+                        <p className="post-meta">{name} has not posted yet.</p>
                     </div>
-                </div>
+                )}
             </div>
             <div className="card-footer">
                 Show all posts <FaArrowRight className="footer-icon" />

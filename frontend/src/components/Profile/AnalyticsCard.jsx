@@ -2,7 +2,11 @@ import React from 'react';
 import { FaEye, FaUserFriends, FaChartBar, FaSearch, FaArrowRight } from 'react-icons/fa';
 import './AnalyticsCard.css';
 
-const AnalyticsCard = () => {
+const AnalyticsCard = ({ analytics }) => {
+    const profileViews = analytics?.profileViews ?? 0;
+    const postImpressions = analytics?.postImpressions ?? 0;
+    const searchAppearances = analytics?.searchAppearances ?? 0;
+
     return (
         <div className="card analytics-card">
             <div className="card-content">
@@ -15,7 +19,7 @@ const AnalyticsCard = () => {
                     <div className="analytics-item">
                         <FaUserFriends className="analytics-icon" />
                         <div className="analytics-text">
-                            <h4>29 profile views</h4>
+                            <h4>{profileViews} profile views</h4>
                             <p>Discover who's viewed your profile.</p>
                         </div>
                     </div>
@@ -23,7 +27,7 @@ const AnalyticsCard = () => {
                     <div className="analytics-item">
                         <FaChartBar className="analytics-icon" />
                         <div className="analytics-text">
-                            <h4>3 post impressions</h4>
+                            <h4>{postImpressions} post impressions</h4>
                             <p>Check out who's engaging with your posts.</p>
                             <span className="analytics-time">Past 7 days</span>
                         </div>

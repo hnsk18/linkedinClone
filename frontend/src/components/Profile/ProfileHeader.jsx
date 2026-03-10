@@ -3,7 +3,14 @@ import './ProfileHeader.css';
 import { MdVerified } from 'react-icons/md';
 import { FaPen, FaCamera } from 'react-icons/fa';
 
-const ProfileHeader = () => {
+const ProfileHeader = ({ user, onEditIntro }) => {
+    const name = user?.name || 'Your name';
+    const headline = user?.headline || 'Add a headline to your profile';
+    const location = user?.location || 'Add your location';
+    const connections = user?.connectionsCount ?? 0;
+    const college = user?.college || 'Add your college or company';
+    const initial = name ? name.charAt(0).toLowerCase() : 'u';
+
     return (
         <div className="card profile-header-container">
             <div className="profile-cover">
@@ -13,26 +20,28 @@ const ProfileHeader = () => {
             <div className="profile-info-section">
                 <div className="profile-photo-container">
                     <div className="profile-photo">
-                        <span className="photo-initial">h</span>
+                        <span className="photo-initial">{initial}</span>
                         <div className="open-to-work-frame">#OPENTOWORK</div>
                     </div>
                 </div>
 
                 <div className="profile-actions-top">
-                    <button className="icon-btn"><FaPen /></button>
+                    <button className="icon-btn" onClick={onEditIntro}><FaPen /></button>
                 </div>
 
                 <div className="profile-details-grid">
                     <div className="profile-details-left">
                         <h1 className="profile-name">
-                            hemanth naga sai kumar <span className="pronouns">(He/Him)</span>
+                            {name} <span className="pronouns">(He/Him)</span>
                             <MdVerified className="verified-badge" />
                         </h1>
-                        <p className="profile-headline">Attended CVR College of Engineering, Hyderabad</p>
+                        <p className="profile-headline">{headline}</p>
                         <p className="profile-location">
-                            Guntur East, Andhra Pradesh, India · <a href="#" className="link-blue font-semibold">Contact info</a>
+                            {location} · <a href="#" className="link-blue font-semibold">Contact info</a>
                         </p>
-                        <a href="#" className="link-blue font-semibold mt-1 block">53 connections</a>
+                        <a href="#" className="link-blue font-semibold mt-1 block">
+                            {connections} connections
+                        </a>
 
                         <div className="profile-action-buttons">
                             <button className="btn-primary">Open to</button>
@@ -45,7 +54,7 @@ const ProfileHeader = () => {
                     <div className="profile-details-right">
                         <div className="company-link">
                             <img src="https://via.placeholder.com/32" alt="CVR College" />
-                            <span>CVR College of Engineering, Hyderabad</span>
+                            <span>{college}</span>
                         </div>
                     </div>
                 </div>

@@ -17,7 +17,7 @@ export default function Register() {
         },
         body: JSON.stringify({
           name: name.trim(),
-          email,
+          email: email.trim(),
           password,
           ...(location.trim() && { location: location.trim() }),
         }),
