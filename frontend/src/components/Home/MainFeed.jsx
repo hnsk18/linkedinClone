@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { FaImage, FaVideo, FaNewspaper, FaEllipsisH, FaThumbsUp, FaComment, FaShare, FaPaperPlane, FaGlobe, FaEdit } from 'react-icons/fa';
 import CommentSection from '../Comments/CommentSection';
 import { jwtDecode } from 'jwt-decode';
@@ -50,12 +50,49 @@ function authHeaders() {
     return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function PostText({ text, expanded, onToggle }) {
+    const ref = useRef(null);
+    const [isOverflowing, setIsOverflowing] = useState(false);
+
+    useLayoutEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        // When clamped, clientHeight is limited but scrollHeight reflects full content.
+        const overflowing = el.scrollHeight > el.clientHeight + 1;
+        setIsOverflowing(overflowing);
+    }, [text, expanded]);
+
+    if (!text) return null;
+
+    return (
+        <>
+            <p
+                ref={ref}
+                className={`post-content-text ${expanded ? 'expanded' : 'clamped'}`}
+            >
+                {text}
+            </p>
+            {(expanded || isOverflowing) && (
+                <button
+                    type="button"
+                    className="see-more"
+                    onClick={onToggle}
+                    aria-expanded={expanded}
+                >
+                    {expanded ? 'See less' : 'See more'}
+                </button>
+            )}
+        </>
+    );
+}
+
 const MainFeed = ({ posts = [], onPostCreated }) => {
     const [content, setContent] = useState('');
     const [posting, setPosting] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
     const fileInputRef = useRef(null);
+    const [createPostOpen, setCreatePostOpen] = useState(false);
 
     const [reactionSummaries, setReactionSummaries] = useState({});
     const [pickerPostId, setPickerPostId] = useState(null);
@@ -73,6 +110,7 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
     // Comment section state
     const [commentSectionOpen, setCommentSectionOpen] = useState(null);
     const [currentUserEmail, setCurrentUserEmail] = useState(null);
+    const [expandedByPostId, setExpandedByPostId] = useState({});
 
     useEffect(() => {
         const token = getAuthToken();
@@ -85,6 +123,13 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
             }
         }
     }, []);
+
+    const openCreatePost = () => setCreatePostOpen(true);
+    const closeCreatePost = () => setCreatePostOpen(false);
+
+    const toggleExpanded = (postId) => {
+        setExpandedByPostId(prev => ({ ...prev, [postId]: !prev[postId] }));
+    };
 
     const fetchReactionSummary = async (postId) => {
         try {
@@ -184,6 +229,7 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
             }
             setContent('');
             setSelectedFiles([]);
+            setCreatePostOpen(false);
             if (typeof onPostCreated === 'function') onPostCreated();
         } catch (err) {
             console.error(err);
@@ -336,50 +382,98 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
         <div className="main-feed-container">
             {/* Start a Post Card */}
             <div className="card start-post-card">
-                <form onSubmit={handleSubmitPost}>
-                    <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*,video/*"
-                        multiple
-                        className="post-file-input-hidden"
-                        onChange={handleFileChange}
+                <div className="start-post-top">
+                    <div className="me-avatar-medium">h</div>
+                    <textarea
+                        className="start-post-input"
+                        placeholder="Start a post, try writing with AI"
+                        value=""
+                        readOnly
+                        onClick={openCreatePost}
+                        onFocus={openCreatePost}
+                        rows={2}
+                        style={{ resize: 'none', width: '100%', cursor: 'text' }}
+                        aria-label="Start a post"
                     />
-                    <div className="start-post-top">
-                        <div className="me-avatar-medium">h</div>
-                        <textarea
-                            className="start-post-input"
-                            placeholder="Start a post, try writing with AI"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            rows={2}
-                            style={{ resize: 'none', width: '100%' }}
-                        />
-                    </div>
-                    {selectedFiles.length > 0 && (
-                        <div className="post-media-preview">
-                            {selectedFiles.map((file, i) => (
-                                <div key={i} className="post-media-preview-item">
-                                    {file.type.startsWith('image/') ? (
-                                        <img src={previewUrls[i]} alt="" />
-                                    ) : (
-                                        <video src={previewUrls[i]} muted />
-                                    )}
-                                    <button type="button" className="post-media-remove" onClick={() => removeFile(i)} aria-label="Remove">×</button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    <div className="start-post-actions">
-                        <button type="button" className="action-btn" onClick={() => fileInputRef.current?.click()}><FaImage className="icon-blue" /> Photo</button>
-                        <button type="button" className="action-btn" onClick={() => fileInputRef.current?.click()}><FaVideo className="icon-blue" /> Video</button>
-                        <button type="button" className="action-btn"><FaNewspaper className="icon-orange" /> Write article</button>
-                        <button type="submit" className="action-btn" disabled={posting || (!content.trim() && selectedFiles.length === 0)} style={{ marginLeft: 'auto', fontWeight: 600 }}>
-                            {posting ? 'Posting...' : 'Post'}
-                        </button>
-                    </div>
-                </form>
+                </div>
+                <div className="start-post-actions">
+                    <button type="button" className="action-btn" onClick={openCreatePost}><FaImage className="icon-blue" /> Photo</button>
+                    <button type="button" className="action-btn" onClick={openCreatePost}><FaVideo className="icon-blue" /> Video</button>
+                    <button type="button" className="action-btn" onClick={openCreatePost}><FaNewspaper className="icon-orange" /> Write article</button>
+                </div>
             </div>
+
+            {/* Create post modal */}
+            {createPostOpen && (
+                <div
+                    className="create-post-modal-overlay"
+                    onMouseDown={closeCreatePost}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="create-post-modal-title"
+                >
+                    <div className="create-post-modal" onMouseDown={(e) => e.stopPropagation()}>
+                        <form onSubmit={handleSubmitPost}>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*,video/*"
+                                multiple
+                                className="post-file-input-hidden"
+                                onChange={handleFileChange}
+                            />
+                            <div className="create-post-modal-header">
+                                <div className="create-post-modal-user">
+                                    <div className="me-avatar-medium">h</div>
+                                    <div>
+                                        <h4 className="create-post-modal-title" id="create-post-modal-title">Post to Anyone</h4>
+                                    </div>
+                                </div>
+                                <button type="button" className="create-post-modal-close" onClick={closeCreatePost} aria-label="Close">×</button>
+                            </div>
+
+                            <textarea
+                                className="create-post-input"
+                                placeholder="What do you want to talk about?"
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                rows={5}
+                                autoFocus
+                            />
+
+                            {selectedFiles.length > 0 && (
+                                <div className="post-media-preview create-post-media-preview">
+                                    {selectedFiles.map((file, i) => (
+                                        <div key={i} className="post-media-preview-item">
+                                            {file.type.startsWith('image/') ? (
+                                                <img src={previewUrls[i]} alt="" />
+                                            ) : (
+                                                <video src={previewUrls[i]} muted />
+                                            )}
+                                            <button type="button" className="post-media-remove" onClick={() => removeFile(i)} aria-label="Remove">×</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div className="create-post-actions">
+                                <div className="create-post-actions-left">
+                                    <button type="button" className="action-btn" onClick={() => fileInputRef.current?.click()}><FaImage className="icon-blue" /> Photo</button>
+                                    <button type="button" className="action-btn" onClick={() => fileInputRef.current?.click()}><FaVideo className="icon-blue" /> Video</button>
+                                    <button type="button" className="action-btn"><FaNewspaper className="icon-orange" /> Write article</button>
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    disabled={posting || (!content.trim() && selectedFiles.length === 0)}
+                                >
+                                    {posting ? 'Posting...' : 'Post'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <div className="feed-divider">
                 <hr />
@@ -528,7 +622,11 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                             </div>
 
                             <div className="post-content">
-                                {post.content && <p>{post.content}</p>}
+                                <PostText
+                                    text={post.content}
+                                    expanded={!!expandedByPostId[post.id]}
+                                    onToggle={() => toggleExpanded(post.id)}
+                                />
                             </div>
 
                             {/* Embedded original post card */}
@@ -549,7 +647,11 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                                         </div>
                                     </div>
                                     <div className="post-content repost-embedded-content">
-                                        {originalPost.content && <p>{originalPost.content}</p>}
+                                        <PostText
+                                            text={originalPost.content}
+                                            expanded={!!expandedByPostId[effectiveOriginalId]}
+                                            onToggle={() => toggleExpanded(effectiveOriginalId)}
+                                        />
                                         {originalPost.mediaUrls && (() => {
                                             try {
                                                 const urls = JSON.parse(originalPost.mediaUrls);
@@ -618,7 +720,11 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                                 <button className="icon-btn-small"><FaEllipsisH /></button>
                             </div>
                             <div className="post-content">
-                                {((isRepost ? originalPost : post).content) && <p>{(isRepost ? originalPost : post).content}</p>}
+                                <PostText
+                                    text={(isRepost ? originalPost : post).content}
+                                    expanded={!!expandedByPostId[effectiveOriginalId]}
+                                    onToggle={() => toggleExpanded(effectiveOriginalId)}
+                                />
                                 {((isRepost ? originalPost : post).mediaUrls) && (() => {
                                     const p = isRepost ? originalPost : post;
                                     try {
