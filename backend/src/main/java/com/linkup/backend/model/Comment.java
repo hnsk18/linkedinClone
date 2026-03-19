@@ -1,6 +1,5 @@
 package com.linkup.backend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -14,7 +13,6 @@ public class Comment {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "post_id", nullable = false)
-    @JsonIgnore
     private Post post;
 
     @Column(name = "author_email", nullable = false)

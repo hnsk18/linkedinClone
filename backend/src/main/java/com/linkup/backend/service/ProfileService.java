@@ -37,6 +37,9 @@ public class ProfileService {
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private JobPreferenceRepository jobPreferenceRepository;
+
     public Map<String, Object> getProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -53,6 +56,8 @@ public class ProfileService {
 
         ProfileAnalytics analytics = profileAnalyticsRepository.findByUser(user);
 
+        JobPreference jobPreference = jobPreferenceRepository.findByUser(user).orElse(null);
+
         Map<String, Object> result = new HashMap<>();
         result.put("user", user);
         result.put("experience", experiences);
@@ -60,6 +65,7 @@ public class ProfileService {
         result.put("skills", skills);
         result.put("certifications", certifications);
         result.put("analytics", analytics);
+        result.put("jobPreference", jobPreference);
 
         return result;
     }
@@ -185,6 +191,24 @@ public class ProfileService {
 
         List<UserSkill> userSkills = userSkillRepository.findByUser(user);
         return userSkills.stream().map(UserSkill::getSkill).collect(Collectors.toList());
+    }
+
+    public JobPreference updateJobPreference(Long userId, JobPreference patch) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        JobPreference pref = jobPreferenceRepository.findByUser(user).orElse(new JobPreference());
+        pref.setUser(user);
+
+        if (patch.getJobTitles() != null) pref.setJobTitles(patch.getJobTitles());
+        if (patch.getLocationTypes() != null) pref.setLocationTypes(patch.getLocationTypes());
+        if (patch.getLocations() != null) pref.setLocations(patch.getLocations());
+        if (patch.getStartDate() != null) pref.setStartDate(patch.getStartDate());
+        if (patch.getEmploymentTypes() != null) pref.setEmploymentTypes(patch.getEmploymentTypes());
+        if (patch.getNoticePeriod() != null) pref.setNoticePeriod(patch.getNoticePeriod());
+        if (patch.getExpectedSalary() != null) pref.setExpectedSalary(patch.getExpectedSalary());
+        if (patch.getVisibility() != null) pref.setVisibility(patch.getVisibility());
+
+        return jobPreferenceRepository.save(pref);
     }
 }
 

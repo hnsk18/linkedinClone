@@ -1,24 +1,76 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { FaBookmark, FaUsers, FaNewspaper, FaCalendarAlt } from 'react-icons/fa';
 import './LeftSidebar.css';
 
 const LeftSidebar = () => {
+    const [me, setMe] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const token = useMemo(() => {
+        let t = localStorage.getItem("token");
+        if (!t) return null;
+        try {
+            t = JSON.parse(t);
+        } catch(e) {}
+        return t.replace(/^"|"$/g, "");
+    }, []);
+
+    useEffect(() => {
+        const loadMe = async () => {
+            if (!token) {
+                setLoading(false);
+                return;
+            }
+            try {
+                const res = await fetch("http://localhost:8080/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    setLoading(false);
+                    return;
+                }
+                setMe(await res.json());
+            } catch (e) {
+                console.error("Failed to load me", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadMe();
+    }, [token]);
+
     return (
         <div className="home-left-sidebar">
             <div className="card profile-summary-card">
                 <div className="cover-photo"></div>
                 <div className="profile-info">
-                    <div className="avatar">
-                        <span className="avatar-initial">h</span>
-                        <div className="opentowork-label">#OPENTOWORK</div>
-                    </div>
-                    <h2 className="user-name">hemanth naga s... <span className="premium-icon">in</span></h2>
-                    <p className="user-headline">Attended CVR College of Engineering, Hyderabad</p>
-                    <p className="user-location text-sm text-secondary">Guntur East, Andhra Pradesh</p>
-                    <div className="school-info">
-                        <img src="https://via.placeholder.com/24" alt="School" />
-                        <span>CVR College of Engineering, Hyderabad</span>
-                    </div>
+                    {loading ? (
+                        <>
+                            <div className="avatar"></div>
+                            <h2 className="user-name">Loading...</h2>
+                        </>
+                    ) : me ? (
+                        <>
+                            <div className="avatar">
+                                <span className="avatar-initial">{me.name ? me.name.charAt(0).toLowerCase() : ''}</span>
+                                <div className="opentowork-label">#OPENTOWORK</div>
+                            </div>
+                            <h2 className="user-name">{me.name} <span className="premium-icon">in</span></h2>
+                            <p className="user-headline">{me.headline || 'Add a headline'}</p>
+                            <p className="user-location text-sm text-secondary">{me.location || 'Add a location'}</p>
+                            {me.college && (
+                                <div className="school-info">
+                                    <img src="https://via.placeholder.com/24" alt="School" />
+                                    <span>{me.college}</span>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <div className="avatar"></div>
+                            <h2 className="user-name">Guest</h2>
+                        </>
+                    )}
                 </div>
 
                 <div className="stats-section">

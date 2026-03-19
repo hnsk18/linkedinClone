@@ -3,6 +3,7 @@ package com.linkup.backend.controller;
 import com.linkup.backend.model.Certification;
 import com.linkup.backend.model.Education;
 import com.linkup.backend.model.Experience;
+import com.linkup.backend.model.JobPreference;
 import com.linkup.backend.model.Post;
 import com.linkup.backend.model.Skill;
 import com.linkup.backend.service.ProfileService;
@@ -102,6 +103,13 @@ public class ProfileController {
                                                    @PathVariable Long skillId) {
         List<Skill> skills = profileService.removeSkill(userId, skillId);
         return ResponseEntity.ok(skills);
+    }
+
+    @PutMapping("/{userId}/job-preferences")
+    public ResponseEntity<JobPreference> updateJobPreferences(@PathVariable Long userId,
+                                                              @RequestBody JobPreference patch) {
+        JobPreference updated = profileService.updateJobPreference(userId, patch);
+        return ResponseEntity.ok(updated);
     }
 }
 
