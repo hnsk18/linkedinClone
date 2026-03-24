@@ -3,7 +3,7 @@ import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
 import { jwtDecode } from "jwt-decode";
 
-const API_BASE = "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 
 const ChatContext = createContext(null);
 
@@ -42,12 +42,24 @@ export function ChatProvider({ children }) {
 
     client.onConnect = () => {
       setConnected(true);
+
+      // Legacy/global chat
       client.subscribe("/topic/messages", (frame) => {
         try {
           const body = JSON.parse(frame.body);
           setMessages((prev) => [...prev, body]);
         } catch (e) {
           console.error("Failed to parse incoming message", e);
+        }
+      });
+
+      // Direct messages (1:1) - delivered to the current user.
+      client.subscribe("/user/queue/messages", (frame) => {
+        try {
+          const body = JSON.parse(frame.body);
+          setMessages((prev) => [...prev, body]);
+        } catch (e) {
+          console.error("Failed to parse incoming DM", e);
         }
       });
     };

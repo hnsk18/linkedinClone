@@ -15,10 +15,11 @@ export default function Login() {
     e.preventDefault();
   
     try {
+      const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
       const email = identifier.trim();
       const pass = password;
 
-      const response = await fetch("http://localhost:8080/api/users/login", {
+      const response = await fetch(`${API_BASE}/api/users/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -30,7 +31,8 @@ export default function Login() {
       });
   
       if (!response.ok) {
-        alert("Invalid credentials");
+        const msg = await response.text().catch(() => "");
+        alert(msg || "Invalid credentials");
         return;
       }
   

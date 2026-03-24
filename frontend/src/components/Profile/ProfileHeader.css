@@ -158,6 +158,14 @@
     display: block;
 }
 
+.profile-connections-link {
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+}
+
 .profile-action-buttons {
     display: flex;
     gap: 8px;

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ProfileHeader from '../components/Profile/ProfileHeader';
 import AnalyticsCard from '../components/Profile/AnalyticsCard';
@@ -11,8 +11,11 @@ import RightSidebar from '../components/Sidebar/RightSidebar';
 import Modal from '../components/common/Modal';
 import './ProfilePage.css';
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+
 const ProfilePage = () => {
     const params = useParams();
+    const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
     const [posts, setPosts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -31,14 +34,14 @@ const ProfilePage = () => {
 
     const routeUserId = params.userId ? Number(params.userId) : null;
     const userId = routeUserId ?? me?.id ?? null;
-    const isMyProfile = !routeUserId || routeUserId === me?.id;
+    const isMyProfile = !routeUserId || (me?.id != null && routeUserId === me.id);
+    const [connectionStatus, setConnectionStatus] = useState('LOADING');
 
     useEffect(() => {
         const loadMe = async () => {
-            if (routeUserId) return; // viewing someone else, no need for /me
             if (!token) return;
             try {
-                const res = await fetch("http://localhost:8080/api/users/me", {
+                const res = await fetch(`${API_BASE}/api/users/me`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (!res.ok) return;
@@ -58,8 +61,8 @@ const ProfilePage = () => {
                 setError(null);
 
                 const [profileRes, postsRes] = await Promise.all([
-                    fetch(`http://localhost:8080/api/profile/${userId}`),
-                    fetch(`http://localhost:8080/api/profile/${userId}/posts`)
+                    fetch(`${API_BASE}/api/profile/${userId}`),
+                    fetch(`${API_BASE}/api/profile/${userId}/posts`)
                 ]);
 
                 if (!profileRes.ok) {
@@ -85,10 +88,61 @@ const ProfilePage = () => {
         fetchProfile();
     }, [userId]);
 
+    useEffect(() => {
+        const loadStatus = async () => {
+            if (!token) return;
+            if (!routeUserId) return; // only for other profiles
+            if (me?.id != null && routeUserId === me.id) {
+                setConnectionStatus('NONE');
+                return; // my own profile via /profile/:userId
+            }
+            try {
+                const res = await fetch(`${API_BASE}/api/connections/status?userId=${routeUserId}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                setConnectionStatus(data?.status || 'NONE');
+            } catch (e) {
+                console.error("Failed to load connection status", e);
+                setConnectionStatus('NONE');
+            }
+        };
+        loadStatus();
+    }, [routeUserId, token, me?.id]);
+
+    const sendConnectRequest = async () => {
+        if (!token || !routeUserId) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/connections/request`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ toUserId: routeUserId })
+            });
+            if (!res.ok) {
+                const t = await res.text();
+                alert(t || "Failed to send request");
+                return;
+            }
+            setConnectionStatus('PENDING_OUTGOING');
+        } catch (e) {
+            console.error(e);
+            alert("Failed to send request");
+        }
+    };
+
+    const openMessage = () => {
+        if (!routeUserId || !profile?.user) return;
+        navigate(`/messaging?toUserId=${routeUserId}&toEmail=${encodeURIComponent(profile.user.email || "")}`);
+    };
+
     const refresh = async () => {
         const [profileRes, postsRes] = await Promise.all([
-            fetch(`http://localhost:8080/api/profile/${userId}`),
-            fetch(`http://localhost:8080/api/profile/${userId}/posts`)
+            fetch(`${API_BASE}/api/profile/${userId}`),
+            fetch(`${API_BASE}/api/profile/${userId}/posts`)
         ]);
         if (profileRes.ok) setProfile(await profileRes.json());
         if (postsRes.ok) setPosts(await postsRes.json());
@@ -105,7 +159,7 @@ const ProfilePage = () => {
         const payload = Object.fromEntries(form.entries());
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/users/${userId}/intro`, {
+            const res = await fetch(`${API_BASE}/api/users/${userId}/intro`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -141,7 +195,7 @@ const ProfilePage = () => {
         const payload = Object.fromEntries(form.entries());
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/profile/${userId}/experience`, {
+            const res = await fetch(`${API_BASE}/api/profile/${userId}/experience`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -174,7 +228,7 @@ const ProfilePage = () => {
         const payload = Object.fromEntries(form.entries());
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/profile/${userId}/education`, {
+            const res = await fetch(`${API_BASE}/api/profile/${userId}/education`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -206,7 +260,7 @@ const ProfilePage = () => {
         const payload = Object.fromEntries(form.entries());
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/profile/${userId}/skill`, {
+            const res = await fetch(`${API_BASE}/api/profile/${userId}/skill`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name: payload.name })
@@ -232,7 +286,7 @@ const ProfilePage = () => {
         const payload = Object.fromEntries(form.entries());
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/profile/${userId}/certification`, {
+            const res = await fetch(`${API_BASE}/api/profile/${userId}/certification`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -264,7 +318,7 @@ const ProfilePage = () => {
         const payload = Object.fromEntries(form.entries());
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/profile/${userId}/experience/${selectedId}`, {
+            const res = await fetch(`${API_BASE}/api/profile/${userId}/experience/${selectedId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -297,7 +351,7 @@ const ProfilePage = () => {
         const payload = Object.fromEntries(form.entries());
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/profile/${userId}/education/${selectedId}`, {
+            const res = await fetch(`${API_BASE}/api/profile/${userId}/education/${selectedId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -329,7 +383,7 @@ const ProfilePage = () => {
         const payload = Object.fromEntries(form.entries());
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/profile/${userId}/certification/${selectedId}`, {
+            const res = await fetch(`${API_BASE}/api/profile/${userId}/certification/${selectedId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -358,7 +412,7 @@ const ProfilePage = () => {
         }
         try {
             setSaving(true);
-            const res = await fetch(`http://localhost:8080/api/profile/${userId}/skill/${skillId}`, {
+            const res = await fetch(`${API_BASE}/api/profile/${userId}/skill/${skillId}`, {
                 method: "DELETE"
             });
             if (!res.ok) throw new Error("Failed to remove skill");
@@ -385,6 +439,11 @@ const ProfilePage = () => {
                                 <ProfileHeader
                                     user={profile.user}
                                     onEditIntro={isMyProfile ? () => setModal('intro') : undefined}
+                                    isMyProfile={isMyProfile}
+                                    connectionStatus={isMyProfile ? 'NONE' : connectionStatus}
+                                    onConnect={sendConnectRequest}
+                                    onMessage={openMessage}
+                                    onOpenConnections={() => navigate("/mynetwork")}
                                 />
                                 <AnalyticsCard analytics={profile.analytics} />
                                 <ActivityCard user={profile.user} posts={posts} />

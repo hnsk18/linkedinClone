@@ -3,7 +3,7 @@ import './ProfileHeader.css';
 import { MdVerified } from 'react-icons/md';
 import { FaPen, FaCamera } from 'react-icons/fa';
 
-const ProfileHeader = ({ user, onEditIntro }) => {
+const ProfileHeader = ({ user, onEditIntro, isMyProfile = true, connectionStatus = 'NONE', onConnect, onMessage, onOpenConnections }) => {
     const name = user?.name || 'Your name';
     const headline = user?.headline || 'Add a headline to your profile';
     const location = user?.location || 'Add your location';
@@ -25,9 +25,11 @@ const ProfileHeader = ({ user, onEditIntro }) => {
                     </div>
                 </div>
 
-                <div className="profile-actions-top">
-                    <button className="icon-btn" onClick={onEditIntro}><FaPen /></button>
-                </div>
+                {isMyProfile && (
+                    <div className="profile-actions-top">
+                        <button className="icon-btn" onClick={onEditIntro}><FaPen /></button>
+                    </div>
+                )}
 
                 <div className="profile-details-grid">
                     <div className="profile-details-left">
@@ -39,15 +41,36 @@ const ProfileHeader = ({ user, onEditIntro }) => {
                         <p className="profile-location">
                             {location} · <a href="#" className="link-blue font-semibold">Contact info</a>
                         </p>
-                        <a href="#" className="link-blue font-semibold mt-1 block">
+                        <button type="button" className="link-blue font-semibold mt-1 block profile-connections-link" onClick={onOpenConnections}>
                             {connections} connections
-                        </a>
+                        </button>
 
                         <div className="profile-action-buttons">
-                            <button className="btn-primary">Open to</button>
-                            <button className="btn-outline-primary">Add profile section</button>
-                            <button className="btn-outline">Enhance profile</button>
-                            <button className="btn-outline">Resources</button>
+                            {isMyProfile ? (
+                                <>
+                                    <button className="btn-primary">Open to</button>
+                                    <button className="btn-outline-primary">Add profile section</button>
+                                    <button className="btn-outline">Enhance profile</button>
+                                    <button className="btn-outline">Resources</button>
+                                </>
+                            ) : (
+                                <>
+                                    {connectionStatus === 'LOADING' ? null : (
+                                        <>
+                                    {connectionStatus === 'CONNECTED' ? (
+                                        <button className="btn-primary" type="button" onClick={onMessage}>Message</button>
+                                    ) : connectionStatus === 'PENDING_OUTGOING' ? (
+                                        <button className="btn-outline" type="button" disabled>Pending</button>
+                                    ) : connectionStatus === 'PENDING_INCOMING' ? (
+                                        <button className="btn-outline" type="button" disabled>Respond in Notifications</button>
+                                    ) : (
+                                        <button className="btn-primary" type="button" onClick={onConnect}>Connect</button>
+                                    )}
+                                        </>
+                                    )}
+                                    <button className="btn-outline" type="button">More</button>
+                                </>
+                            )}
                         </div>
                     </div>
 

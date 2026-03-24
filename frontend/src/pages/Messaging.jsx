@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import "../styles/messaging.css";
 import { useChat } from "../context/ChatContext";
+import { useSearchParams } from "react-router-dom";
+
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 
 export default function Messaging() {
   const [selectedConversationId, setSelectedConversationId] = useState(1);
@@ -9,6 +12,51 @@ export default function Messaging() {
   const [draft, setDraft] = useState("");
 
   const { messages, sendMessage, currentUserEmail, connected } = useChat();
+
+  const [params] = useSearchParams();
+  const toEmail = (params.get("toEmail") || "").trim();
+
+  const token = useMemo(() => {
+    let t = localStorage.getItem("token");
+    if (!t) return null;
+    return t.replace(/^"|"$/g, "");
+  }, []);
+
+  const [threadMessages, setThreadMessages] = useState([]);
+
+  // Load thread history when opened from a profile.
+  useEffect(() => {
+    const load = async () => {
+      if (!token || !toEmail) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/messages/thread?with=${encodeURIComponent(toEmail)}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setThreadMessages(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error("Failed to load thread", e);
+      }
+    };
+    load();
+  }, [token, toEmail]);
+
+  // Merge live websocket messages into the open thread.
+  useEffect(() => {
+    if (!toEmail || !currentUserEmail) return;
+    const last = messages[messages.length - 1];
+    if (!last) return;
+    const a = (last.senderEmail || "").toLowerCase();
+    const b = (last.receiverEmail || "").toLowerCase();
+    const me = currentUserEmail.toLowerCase();
+    const other = toEmail.toLowerCase();
+    const isInThread =
+      (a === me && b === other) ||
+      (a === other && b === me);
+    if (!isInThread) return;
+    setThreadMessages((prev) => [...prev, last]);
+  }, [messages, toEmail, currentUserEmail]);
 
   const conversations = [
     {
@@ -69,7 +117,7 @@ export default function Messaging() {
 
   const handleSend = () => {
     if (!draft.trim()) return;
-    sendMessage(draft);
+    sendMessage(draft, toEmail || null);
     setDraft("");
   };
 
@@ -136,7 +184,7 @@ export default function Messaging() {
           <div className="message-thread-header">
             <div className="thread-info">
               <div className="thread-avatar">G</div>
-              <h3>Global chat</h3>
+              <h3>{toEmail ? toEmail : "Global chat"}</h3>
             </div>
             <div className="thread-actions">
               <button className="icon-btn">⋯</button>
@@ -149,7 +197,7 @@ export default function Messaging() {
               {!connected && (
                 <div className="chat-status">Connecting to chat…</div>
               )}
-              {messages.map((m, idx) => {
+              {(toEmail ? threadMessages : messages).map((m, idx) => {
                 const isMe =
                   m.senderEmail &&
                   currentUserEmail &&

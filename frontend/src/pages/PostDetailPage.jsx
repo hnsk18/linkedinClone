@@ -6,7 +6,7 @@ import MainFeed from '../components/Home/MainFeed';
 import RightSidebarHome from '../components/Home/RightSidebarHome';
 import './HomePage.css';
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
 const PostDetailPage = () => {
     const { id } = useParams();

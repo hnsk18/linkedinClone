@@ -38,6 +38,7 @@
     height: 34px;
     color: var(--li-text-primary);
     width: 280px;
+    position: relative;
 }
 
 .search-icon {
@@ -60,6 +61,81 @@
     outline: none;
     width: 100%;
     font-size: 14px;
+}
+
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 360px;
+    max-width: min(520px, 80vw);
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.18);
+    overflow: hidden;
+    z-index: 999;
+}
+
+.search-dropdown-row {
+    padding: 12px 14px;
+    font-size: 14px;
+}
+
+.search-dropdown-row.muted {
+    color: var(--li-text-secondary);
+}
+
+.search-dropdown-item {
+    width: 100%;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.search-dropdown-item:hover {
+    background: rgba(0,0,0,0.04);
+}
+
+.search-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #56687A;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex: 0 0 auto;
+}
+
+.search-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.search-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--li-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.search-subtitle {
+    font-size: 12px;
+    color: var(--li-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .navbar-nav {
@@ -169,4 +245,103 @@
 .logo-wrapper {
     display: flex;
     align-items: center;
+}
+
+/* Logout confirmation modal */
+.logout-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInOverlay 0.15s ease;
+}
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.logout-modal {
+    background: #fff;
+    border-radius: 12px;
+    padding: 36px 32px 28px;
+    width: 360px;
+    max-width: 90vw;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    animation: slideUpModal 0.2s ease;
+}
+
+@keyframes slideUpModal {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.logout-modal-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #fde8e8;
+    color: #CC1016;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.logout-modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--li-text-primary);
+    margin: 0 0 8px;
+}
+
+.logout-modal-text {
+    font-size: 14px;
+    color: var(--li-text-secondary);
+    margin: 0 0 24px;
+    line-height: 1.5;
+}
+
+.logout-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.logout-modal-cancel {
+    flex: 1;
+    padding: 10px 0;
+    border: 1.5px solid var(--li-border);
+    border-radius: 20px;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--li-text-primary);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.logout-modal-cancel:hover {
+    background: rgba(0,0,0,0.05);
+}
+
+.logout-modal-confirm {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    border-radius: 20px;
+    background: #CC1016;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.logout-modal-confirm:hover {
+    background: #a50e12;
 }

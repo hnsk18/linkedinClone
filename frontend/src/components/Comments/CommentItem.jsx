@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaEllipsisH, FaTrash, FaEdit } from 'react-icons/fa';
 import './CommentItem.css';
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
 function formatRelativeTime(isoString) {
     if (!isoString) return '';

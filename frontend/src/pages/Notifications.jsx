@@ -1,9 +1,57 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "../components/Navbar";
 import "../styles/notifications.css";
 
 export default function Notifications() {
   const [filter, setFilter] = useState("all");
+  const [invites, setInvites] = useState([]);
+  const [invitesLoading, setInvitesLoading] = useState(false);
+  const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+
+  const token = useMemo(() => {
+    let t = localStorage.getItem("token");
+    if (!t) return null;
+    return t.replace(/^"|"$/g, "");
+  }, []);
+
+  useEffect(() => {
+    const loadInvites = async () => {
+      if (!token) return;
+      setInvitesLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/connections/requests/incoming`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        setInvites(Array.isArray(data) ? data : []);
+      } catch (e) {
+        console.error("Failed to load invitations", e);
+      } finally {
+        setInvitesLoading(false);
+      }
+    };
+    loadInvites();
+  }, [token]);
+
+  const respond = async (requestId, action) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/connections/requests/${requestId}/${action}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        const t = await res.text();
+        alert(t || "Failed");
+        return;
+      }
+      setInvites((prev) => prev.filter((x) => x.requestId !== requestId));
+    } catch (e) {
+      console.error(e);
+      alert("Failed");
+    }
+  };
 
   const notifications = [
     {
@@ -117,6 +165,38 @@ export default function Notifications() {
 
       {/* Main Feed */}
       <main className="notifications-feed">
+        <div className="invites-card">
+          <div className="invites-header">
+            <h3>Invitations</h3>
+            <span className="invites-count">{invites.length}</span>
+          </div>
+          {invitesLoading ? (
+            <div className="invites-empty">Loading…</div>
+          ) : invites.length === 0 ? (
+            <div className="invites-empty">No invitations right now</div>
+          ) : (
+            <div className="invites-list">
+              {invites.map((r) => (
+                <div key={r.requestId} className="invite-item">
+                  <div className="invite-avatar">{(r.fromName?.[0] || "U").toUpperCase()}</div>
+                  <div className="invite-body">
+                    <div className="invite-title">
+                      <strong>{r.fromName || r.fromEmail || "Unknown"}</strong>
+                    </div>
+                    <div className="invite-subtitle">
+                      {[r.fromHeadline, r.fromLocation].filter(Boolean).join(" • ")}
+                    </div>
+                  </div>
+                  <div className="invite-actions">
+                    <button className="invite-btn primary" onClick={() => respond(r.requestId, "accept")}>Accept</button>
+                    <button className="invite-btn" onClick={() => respond(r.requestId, "reject")}>Ignore</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="filter-tabs">
           <button 
             className={`tab ${filter === "all" ? "active" : ""}`}

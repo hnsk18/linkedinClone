@@ -10,16 +10,16 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.PageRequest;
+
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
-<<<<<<< Updated upstream
-@CrossOrigin(origins = {"http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"})
-=======
 @CrossOrigin(origins = "*")
->>>>>>> Stashed changes
 public class UserController {
 
     @Autowired
@@ -118,6 +118,26 @@ public class UserController {
             out.put("passwordLength", isNull ? 0 : stored.length());
             out.put("passwordPrefix", isNull ? null : stored.substring(0, Math.min(10, stored.length())));
         }
+
+        return ResponseEntity.ok(out);
+    }
+
+    public record UserSearchResult(Long id, String name, String headline, String location, String email) {}
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchUsers(
+            @RequestParam("q") String q,
+            @RequestParam(value = "limit", required = false, defaultValue = "10") int limit
+    ) {
+        String query = q == null ? "" : q.trim();
+        if (query.isBlank()) return ResponseEntity.ok(List.of());
+
+        int safeLimit = Math.max(1, Math.min(limit, 20));
+        List<User> users = userRepository.searchUsers(query, PageRequest.of(0, safeLimit));
+
+        List<UserSearchResult> out = users.stream()
+                .map(u -> new UserSearchResult(u.getId(), u.getName(), u.getHeadline(), u.getLocation(), u.getEmail()))
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(out);
     }

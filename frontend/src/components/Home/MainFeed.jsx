@@ -23,7 +23,7 @@ function formatRelativeTime(isoString) {
     return date.toLocaleDateString();
 }
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
 const REACTIONS = [
     { type: 'LIKE', label: 'Like', emoji: '👍', color: '#0A66C2' },
