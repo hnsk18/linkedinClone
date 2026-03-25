@@ -19,4 +19,22 @@ public interface MessageRepository extends JpaRepository<Message, Long> {
             order by m.timestamp asc
             """)
     List<Message> findThread(@Param("a") String a, @Param("b") String b);
+
+    @Query("""
+            select m from Message m
+            where m.id in (
+                select max(m2.id) from Message m2
+                where m2.senderEmail is not null
+                  and m2.receiverEmail is not null
+                  and (lower(m2.senderEmail) = lower(:email)
+                       or lower(m2.receiverEmail) = lower(:email))
+                group by
+                    case
+                        when lower(m2.senderEmail) = lower(:email) then lower(m2.receiverEmail)
+                        else lower(m2.senderEmail)
+                    end
+            )
+            order by m.timestamp desc
+            """)
+    List<Message> findLatestPerConversation(@Param("email") String email);
 }
