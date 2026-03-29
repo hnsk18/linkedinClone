@@ -4,7 +4,7 @@ import { MdVerified } from 'react-icons/md';
 import { FaPen, FaCamera } from 'react-icons/fa';
 import AddProfileSectionModal from './AddProfileSectionModal';
 
-const ProfileHeader = ({ user, experience, education, jobPreference, onEditIntro, onOpenModal }) => {
+const ProfileHeader = ({ user, experience, education, jobPreference, onEditIntro, onOpenModal, onOpenConnections }) => {
     const name = user?.name || 'Your name';
     const headline = user?.headline || 'Add a headline to your profile';
     const location = user?.location || 'Add your location';
