@@ -7,8 +7,12 @@ import ActivityCard from '../components/Profile/ActivityCard';
 import ExperienceCard from '../components/Profile/ExperienceCard';
 import SkillsCard from '../components/Profile/SkillsCard';
 import InterestsCard from '../components/Profile/InterestsCard';
+import HighlightsCard from '../components/Profile/HighlightsCard';
+import AboutCard from '../components/Profile/AboutCard';
 import RightSidebar from '../components/Sidebar/RightSidebar';
 import Modal from '../components/common/Modal';
+import JobPreferencesModal from '../components/Profile/JobPreferencesModal';
+import EditJobPreferencesModal from '../components/Profile/EditJobPreferencesModal';
 import './ProfilePage.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
@@ -29,6 +33,9 @@ const ProfilePage = () => {
     const token = useMemo(() => {
         let t = localStorage.getItem("token");
         if (!t) return null;
+        try {
+            t = JSON.parse(t);
+        } catch (e) { }
         return t.replace(/^"|"$/g, "");
     }, []);
 
@@ -425,6 +432,29 @@ const ProfilePage = () => {
         }
     };
 
+    const updateJobPreferences = async (patch) => {
+        if (!isMyProfile) {
+            alert("You can only edit your own profile.");
+            return;
+        }
+        try {
+            setSaving(true);
+            const res = await fetch(`http://localhost:8080/api/profile/${userId}/job-preferences`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(patch)
+            });
+            if (!res.ok) throw new Error("Failed to update job preferences");
+            await refresh();
+            setModal(null);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to update job preferences");
+        } finally {
+            setSaving(false);
+        }
+    };
+
     return (
         <div className="profile-page-container">
             <Navbar />
@@ -438,12 +468,10 @@ const ProfilePage = () => {
                             <>
                                 <ProfileHeader
                                     user={profile.user}
+                                    experience={profile.experience}
+                                    education={profile.education}
+                                    jobPreference={profile.jobPreference}
                                     onEditIntro={isMyProfile ? () => setModal('intro') : undefined}
-                                    isMyProfile={isMyProfile}
-                                    connectionStatus={isMyProfile ? 'NONE' : connectionStatus}
-                                    onConnect={sendConnectRequest}
-                                    onMessage={openMessage}
-                                    onOpenConnections={() => navigate("/mynetwork")}
                                 />
                                 <AnalyticsCard analytics={profile.analytics} />
                                 <ActivityCard user={profile.user} posts={posts} />
@@ -847,6 +875,24 @@ const ProfilePage = () => {
                         </div>
                     </div>
                 </Modal>
+            )}
+
+            {modal === 'jobPreferences' && (
+                <JobPreferencesModal
+                    user={profile?.user}
+                    jobPreference={profile?.jobPreference}
+                    onClose={() => setModal(null)}
+                    onEdit={() => setModal('editJobPreferences')}
+                />
+            )}
+
+            {modal === 'editJobPreferences' && (
+                <EditJobPreferencesModal
+                    jobPreference={profile?.jobPreference}
+                    onClose={() => setModal(null)}
+                    onSave={updateJobPreferences}
+                    saving={saving}
+                />
             )}
         </div>
     );

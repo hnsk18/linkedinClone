@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = { "http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000" })
 public class UserController {
 
     @Autowired
@@ -33,20 +33,19 @@ public class UserController {
 
     // REGISTER
     @PostMapping("/register")
-    public User register(@RequestBody User user){
+    public User register(@RequestBody User user) {
         return userService.registerUser(user);
     }
 
     // LOGIN
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User user){
+    public ResponseEntity<?> login(@RequestBody User user) {
 
         User loggedUser = userService.login(
                 user != null ? user.getEmail() : null,
-                user != null ? user.getPassword() : null
-        );
+                user != null ? user.getPassword() : null);
 
-        if(loggedUser == null){
+        if (loggedUser == null) {
             return ResponseEntity.status(401).body("Invalid email or password");
         }
 
@@ -86,17 +85,17 @@ public class UserController {
      * TEMP DEBUG ENDPOINT (remove before production).
      * Helps diagnose why login returns 401 without leaking passwords.
      */
-    @RequestMapping(value = "/debug/check-email", method = {RequestMethod.GET, RequestMethod.POST})
+    @RequestMapping(value = "/debug/check-email", method = { RequestMethod.GET, RequestMethod.POST })
     public ResponseEntity<?> debugCheckEmail(
             @RequestParam(value = "email", required = false) String email,
-            @RequestBody(required = false) Map<String, Object> body
-    ) {
+            @RequestBody(required = false) Map<String, Object> body) {
         if ((email == null || email.isBlank()) && body != null && body.get("email") != null) {
             email = String.valueOf(body.get("email"));
         }
 
         String normalized = email == null ? null : email.trim().toLowerCase();
-        User user = (normalized == null || normalized.isBlank()) ? null : userRepository.findByEmailIgnoreCase(normalized);
+        User user = (normalized == null || normalized.isBlank()) ? null
+                : userRepository.findByEmailIgnoreCase(normalized);
 
         Map<String, Object> out = new HashMap<>();
         out.put("inputEmail", email);
@@ -109,7 +108,8 @@ public class UserController {
 
             String stored = user.getPassword();
             boolean isNull = stored == null;
-            boolean looksBcrypt = !isNull && (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$"));
+            boolean looksBcrypt = !isNull
+                    && (stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$"));
             boolean looksJwt = !isNull && stored.split("\\.").length == 3; // common accidental mistake
 
             out.put("passwordNull", isNull);
@@ -122,15 +122,16 @@ public class UserController {
         return ResponseEntity.ok(out);
     }
 
-    public record UserSearchResult(Long id, String name, String headline, String location, String email) {}
+    public record UserSearchResult(Long id, String name, String headline, String location, String email) {
+    }
 
     @GetMapping("/search")
     public ResponseEntity<?> searchUsers(
             @RequestParam("q") String q,
-            @RequestParam(value = "limit", required = false, defaultValue = "10") int limit
-    ) {
+            @RequestParam(value = "limit", required = false, defaultValue = "10") int limit) {
         String query = q == null ? "" : q.trim();
-        if (query.isBlank()) return ResponseEntity.ok(List.of());
+        if (query.isBlank())
+            return ResponseEntity.ok(List.of());
 
         int safeLimit = Math.max(1, Math.min(limit, 20));
         List<User> users = userRepository.searchUsers(query, PageRequest.of(0, safeLimit));

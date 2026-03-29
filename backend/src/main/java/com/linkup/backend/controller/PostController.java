@@ -100,8 +100,8 @@ public class PostController {
     }
 
     @GetMapping("/feed")
-    public List<Post> getFeed(){
-        return postService.getFeed();
+    public List<Post> getFeed(@RequestParam(defaultValue = "10") int size){
+        return postService.getFeed(size);
     }
 
     @GetMapping("/{id}")

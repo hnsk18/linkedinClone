@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class PostService {
@@ -20,8 +21,17 @@ public class PostService {
         return postRepository.save(post);
     }
 
-    public List<Post> getFeed(){
-        return postRepository.findAllByOrderByCreatedAtDesc();
+    public List<Post> getFeed(int size){
+        long count = postRepository.count();
+
+        if (count == 0) {
+            return List.of();
+        }
+
+        int maxOffset = (int) (count - size);
+        int randomOffset = maxOffset > 0 ? new Random().nextInt(maxOffset + 1) : 0;
+
+        return postRepository.getPostsWithOffset(size, randomOffset);
     }
 
     public Optional<Post> findById(Long id) {

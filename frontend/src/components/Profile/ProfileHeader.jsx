@@ -1,15 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './ProfileHeader.css';
 import { MdVerified } from 'react-icons/md';
 import { FaPen, FaCamera } from 'react-icons/fa';
+import AddProfileSectionModal from './AddProfileSectionModal';
 
-const ProfileHeader = ({ user, onEditIntro, isMyProfile = true, connectionStatus = 'NONE', onConnect, onMessage, onOpenConnections }) => {
+const ProfileHeader = ({ user, experience, education, jobPreference, onEditIntro, onOpenModal }) => {
     const name = user?.name || 'Your name';
     const headline = user?.headline || 'Add a headline to your profile';
     const location = user?.location || 'Add your location';
     const connections = user?.connectionsCount ?? 0;
-    const college = user?.college || 'Add your college or company';
     const initial = name ? name.charAt(0).toLowerCase() : 'u';
+
+    // Get latest experience and education (assuming the array might not be strictly sorted, but taking the first one for now, or you could add basic sorting if needed. Usually backends return latest first or we can just use the first item).
+    const latestExperience = experience && experience.length > 0 ? experience[0] : null;
+    const latestEducation = education && education.length > 0 ? education[0] : null;
+
+    const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
 
     return (
         <div className="card profile-header-container">
@@ -25,11 +31,11 @@ const ProfileHeader = ({ user, onEditIntro, isMyProfile = true, connectionStatus
                     </div>
                 </div>
 
-                {isMyProfile && (
-                    <div className="profile-actions-top">
+                <div className="profile-actions-top">
+                    {onEditIntro && (
                         <button className="icon-btn" onClick={onEditIntro}><FaPen /></button>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 <div className="profile-details-grid">
                     <div className="profile-details-left">
@@ -46,51 +52,53 @@ const ProfileHeader = ({ user, onEditIntro, isMyProfile = true, connectionStatus
                         </button>
 
                         <div className="profile-action-buttons">
-                            {isMyProfile ? (
-                                <>
-                                    <button className="btn-primary">Open to</button>
-                                    <button className="btn-outline-primary">Add profile section</button>
-                                    <button className="btn-outline">Enhance profile</button>
-                                    <button className="btn-outline">Resources</button>
-                                </>
-                            ) : (
-                                <>
-                                    {connectionStatus === 'LOADING' ? null : (
-                                        <>
-                                    {connectionStatus === 'CONNECTED' ? (
-                                        <button className="btn-primary" type="button" onClick={onMessage}>Message</button>
-                                    ) : connectionStatus === 'PENDING_OUTGOING' ? (
-                                        <button className="btn-outline" type="button" disabled>Pending</button>
-                                    ) : connectionStatus === 'PENDING_INCOMING' ? (
-                                        <button className="btn-outline" type="button" disabled>Respond in Notifications</button>
-                                    ) : (
-                                        <button className="btn-primary" type="button" onClick={onConnect}>Connect</button>
-                                    )}
-                                        </>
-                                    )}
-                                    <button className="btn-outline" type="button">More</button>
-                                </>
-                            )}
+                            <button className="btn-primary">Open to</button>
+                            <button className="btn-outline-primary" onClick={() => setIsAddSectionModalOpen(true)}>Add profile section</button>
+                            <button className="btn-outline">Enhance profile</button>
+                            <button className="btn-outline">Resources</button>
                         </div>
                     </div>
 
                     <div className="profile-details-right">
-                        <div className="company-link">
-                            <img src="https://via.placeholder.com/32" alt="CVR College" />
-                            <span>{college}</span>
-                        </div>
+                        {latestExperience && (
+                            <div className="company-link">
+                                <img src="https://ui-avatars.com/api/?name=C&background=fff&color=000" alt={latestExperience.company} />
+                                <span>{latestExperience.company}</span>
+                            </div>
+                        )}
+                        {latestEducation && (
+                            <div className="company-link">
+                                <img src="https://ui-avatars.com/api/?name=E&background=fff&color=000" alt={latestEducation.collegeName} />
+                                <span>{latestEducation.collegeName}</span>
+                            </div>
+                        )}
+                        {!latestExperience && !latestEducation && (
+                            <div className="company-link" onClick={() => onOpenModal && onOpenModal('education')} style={{ cursor: 'pointer' }}>
+                                <img src="https://via.placeholder.com/32" alt="Add college" />
+                                <span>Add your college or company</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 <div className="open-to-work-box">
                     <div className="box-content-left">
                         <h3>Open to work</h3>
-                        <p>Software Engineer, Web Developer, Python Developer and Java Programmer roles</p>
-                        <a href="#" className="link-blue font-semibold">Show details</a>
+                        <p>{jobPreference?.jobTitles || 'Software Engineer, Web Developer'} roles</p>
+                        <span className="link-blue font-semibold" style={{ cursor: 'pointer' }} onClick={() => onOpenModal && onOpenModal('jobPreferences')}>Show details</span>
                     </div>
-                    <button className="icon-btn"><FaPen /></button>
+                    {onEditIntro && (
+                        <button className="icon-btn" onClick={() => onOpenModal && onOpenModal('editJobPreferences')}><FaPen /></button>
+                    )}
                 </div>
             </div>
+
+            {isAddSectionModalOpen && (
+                <AddProfileSectionModal
+                    onClose={() => setIsAddSectionModalOpen(false)}
+                    onOpenModal={onOpenModal}
+                />
+            )}
         </div>
     );
 };
