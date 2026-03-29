@@ -1,0 +1,73 @@
+.highlights-card-container {
+    padding: 24px;
+}
+
+.highlights-header {
+    margin-bottom: 16px;
+}
+
+.highlights-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #191919;
+    margin: 0;
+}
+
+.highlights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.highlight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.highlight-icon img {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px; /* Some icons might be slightly rounded squares */
+    object-fit: contain;
+    border: 1px solid #ebebeb;
+}
+
+.highlight-info h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #191919;
+    margin: 0 0 4px 0;
+    line-height: 1.3;
+}
+
+.highlight-info p {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.highlight-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    padding: 6px 16px;
+    color: #444;
+}
+
+.highlight-btn .btn-icon {
+    font-size: 16px;
+}
+
+.highlight-btn .star-icon {
+    color: #f5c042;
+}
+
+@media (max-width: 768px) {
+    .highlights-grid {
+        grid-template-columns: 1fr;
+    }
+}

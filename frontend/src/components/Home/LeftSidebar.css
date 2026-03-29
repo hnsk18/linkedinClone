@@ -1,0 +1,205 @@
+/* src/components/Home/LeftSidebar.css */
+.home-left-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: sticky;
+    top: 64px; /* below fixed navbar */
+    align-self: flex-start;
+}
+
+.profile-summary-card {
+    position: relative;
+    overflow: visible;
+    text-align: center;
+}
+
+.cover-photo {
+    height: 54px;
+    background-color: #A0B4B7;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.profile-info {
+    padding: 0 12px 16px;
+    position: relative;
+}
+
+.profile-info .avatar {
+    width: 72px;
+    height: 72px;
+    box-sizing: border-box;
+    background-clip: content-box;
+    border: 2px solid white;
+    border-radius: 50%;
+    margin: -38px auto 12px;
+    background-color: #56687A;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.avatar-initial {
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.opentowork-label {
+    position: absolute;
+    bottom: -4px;
+    background-color: #057642;
+    color: white;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 8px;
+    border: 1px solid white;
+}
+
+.user-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--li-text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+}
+
+.premium-icon {
+    background-color: #F8C77E;
+    color: #8c6a38;
+    font-size: 10px;
+    padding: 2px;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+.user-headline {
+    font-size: 12px;
+    color: var(--li-text-secondary);
+    line-height: 1.4;
+    margin-top: 4px;
+}
+
+.user-location {
+    margin-top: 4px;
+}
+
+.school-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--li-text-primary);
+    font-weight: 600;
+}
+
+.stats-section {
+    border-top: 1px solid var(--li-border-light);
+    padding: 12px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.stat-row:hover {
+    background-color: var(--li-border-light);
+}
+
+.stat-label {
+    color: var(--li-text-secondary);
+    font-weight: 600;
+}
+
+.stat-value {
+    color: var(--li-primary);
+    font-weight: 600;
+}
+
+.premium-upsell {
+    border-top: 1px solid var(--li-border-light);
+    padding: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.premium-upsell:hover {
+    background-color: var(--li-border-light);
+}
+
+.flex-align {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.premium-square {
+    width: 12px;
+    height: 12px;
+    background-color: #F8C77E;
+    display: inline-block;
+}
+
+.saved-items {
+    border-top: 1px solid var(--li-border-light);
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.saved-items:hover {
+    background-color: var(--li-border-light);
+}
+
+.groups-card {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--li-primary);
+}
+
+.groups-list {
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.groups-list a {
+    text-decoration: none;
+    font-size: 12px;
+}
+
+.plus-icon {
+    color: var(--li-text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.discover-more {
+    border-top: 1px solid var(--li-border-light);
+    padding: 12px;
+    text-align: center;
+    color: var(--li-text-secondary);
+    cursor: pointer;
+}
+
+.discover-more:hover {
+    background-color: var(--li-border-light);
+}

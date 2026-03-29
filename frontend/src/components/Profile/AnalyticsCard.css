@@ -1,0 +1,75 @@
+/* src/components/Profile/AnalyticsCard.css */
+.analytics-card .card-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--li-text-primary);
+    margin-bottom: 4px;
+}
+
+.private-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--li-text-secondary);
+    margin-bottom: 16px;
+}
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+}
+
+.analytics-item {
+    display: flex;
+    gap: 8px;
+}
+
+.analytics-icon {
+    font-size: 24px;
+    color: var(--li-text-secondary);
+    flex-shrink: 0;
+}
+
+.analytics-text h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--li-text-primary);
+}
+
+.analytics-text p {
+    font-size: 14px;
+    color: var(--li-text-primary);
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.analytics-time {
+    display: block;
+    font-size: 12px;
+    color: var(--li-text-secondary);
+    margin-top: 4px;
+}
+
+.card-footer {
+    border-top: 1px solid var(--li-border);
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--li-text-secondary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.card-footer:hover {
+    background-color: var(--li-border-light);
+}
+
+.footer-icon {
+    font-size: 16px;
+}

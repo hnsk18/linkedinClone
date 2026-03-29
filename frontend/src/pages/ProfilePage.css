@@ -1,0 +1,82 @@
+.profile-page-container {
+    padding-top: 52px;
+    /* For fixed navbar */
+    min-height: 100vh;
+}
+
+.profile-main-wrapper {
+    max-width: 1128px;
+    margin: 12px auto 24px;
+}
+
+.profile-main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+    gap: 24px;
+}
+
+.profile-center-column {
+    display: flex;
+    flex-direction: column;
+    width: 780px;
+}
+
+.profile-right-column {
+    display: flex;
+    flex-direction: column;
+    width: 324px;
+}
+
+/* Base button styles matching LinkedIn */
+.btn-primary {
+    background-color: var(--li-primary);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.btn-primary:hover {
+    background-color: var(--li-primary-hover);
+}
+
+.btn-outline {
+    background-color: transparent;
+    color: var(--li-text-secondary);
+    border: 1px solid var(--li-text-secondary);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-outline:hover {
+    background-color: var(--li-border-light);
+    border-color: var(--li-text-primary);
+    color: var(--li-text-primary);
+}
+
+.btn-outline-primary {
+    background-color: transparent;
+    color: var(--li-primary);
+    border: 1px solid var(--li-primary);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-outline-primary:hover {
+    background-color: rgba(10, 102, 194, 0.1);
+    border-width: 2px;
+    padding: 5px 15px;
+    /* Adjust padding to prevent layout shift on hover due to border-width */
+}
