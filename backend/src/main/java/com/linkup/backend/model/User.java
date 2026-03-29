@@ -24,8 +24,10 @@ public class User {
 
     private String location;
 
+    @Column(columnDefinition = "LONGTEXT")
     private String profilePicture;
 
+    @Column(columnDefinition = "LONGTEXT")
     private String coverPicture;
 
     @Column(columnDefinition = "TEXT")

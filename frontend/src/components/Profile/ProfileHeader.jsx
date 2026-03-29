@@ -4,7 +4,17 @@ import { MdVerified } from 'react-icons/md';
 import { FaPen, FaCamera } from 'react-icons/fa';
 import AddProfileSectionModal from './AddProfileSectionModal';
 
-const ProfileHeader = ({ user, experience, education, jobPreference, onEditIntro, onOpenModal }) => {
+const ProfileHeader = ({
+    user,
+    experience,
+    education,
+    jobPreference,
+    onEditIntro,
+    onOpenModal,
+    onOpenConnections,
+    onEditProfilePicture,
+    onEditCoverPicture
+}) => {
     const name = user?.name || 'Your name';
     const headline = user?.headline || 'Add a headline to your profile';
     const location = user?.location || 'Add your location';
@@ -19,16 +29,35 @@ const ProfileHeader = ({ user, experience, education, jobPreference, onEditIntro
 
     return (
         <div className="card profile-header-container">
-            <div className="profile-cover">
-                <button className="edit-cover-btn"><FaCamera /></button>
+            <div
+                className="profile-cover"
+                style={user?.coverPicture ? { backgroundImage: `url(${user.coverPicture})` } : undefined}
+            >
+                <button
+                    className="edit-cover-btn"
+                    type="button"
+                    onClick={onEditCoverPicture}
+                    aria-label="Edit cover photo"
+                >
+                    <FaCamera />
+                </button>
             </div>
 
             <div className="profile-info-section">
                 <div className="profile-photo-container">
-                    <div className="profile-photo">
-                        <span className="photo-initial">{initial}</span>
+                    <button
+                        className="profile-photo"
+                        type="button"
+                        onClick={onEditProfilePicture}
+                        aria-label="Edit profile photo"
+                    >
+                        {user?.profilePicture ? (
+                            <img src={user.profilePicture} alt={`${name} profile`} className="profile-photo-image" />
+                        ) : (
+                            <span className="photo-initial">{initial}</span>
+                        )}
                         <div className="open-to-work-frame">#OPENTOWORK</div>
-                    </div>
+                    </button>
                 </div>
 
                 <div className="profile-actions-top">

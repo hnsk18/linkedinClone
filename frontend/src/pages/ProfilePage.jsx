@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ProfileHeader from '../components/Profile/ProfileHeader';
@@ -27,6 +27,8 @@ const ProfilePage = () => {
     const [modal, setModal] = useState(null); // 'intro' | 'experience' | 'education' | 'skill' | 'cert' | 'editExperience' | 'editEducation' | 'editCert' | 'editSkills'
     const [saving, setSaving] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
+    const profilePhotoInputRef = useRef(null);
+    const coverPhotoInputRef = useRef(null);
 
     const [me, setMe] = useState(null);
 
@@ -455,6 +457,88 @@ const ProfilePage = () => {
         }
     };
 
+    const fileToDataUrl = (file) =>
+        new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+    const optimizeImageToDataUrl = async (file) => {
+        const sourceDataUrl = await fileToDataUrl(file);
+        const img = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = reject;
+            image.src = sourceDataUrl;
+        });
+
+        const maxSide = 1024;
+        const width = img.width || 1;
+        const height = img.height || 1;
+        const scale = Math.min(1, maxSide / Math.max(width, height));
+        const targetWidth = Math.max(1, Math.round(width * scale));
+        const targetHeight = Math.max(1, Math.round(height * scale));
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return sourceDataUrl;
+        ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+        return canvas.toDataURL('image/jpeg', 0.82);
+    };
+
+    const updateProfileImage = async (field, file) => {
+        if (!isMyProfile) {
+            alert("You can only edit your own profile.");
+            return;
+        }
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            return;
+        }
+
+        try {
+            setSaving(true);
+            const imageDataUrl = await optimizeImageToDataUrl(file);
+            const res = await fetch(`${API_BASE}/api/users/${userId}/intro`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({ [field]: imageDataUrl })
+            });
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(errorText || "Failed to update profile image");
+            }
+            const updatedUser = await res.json();
+            setProfile((p) => (p ? { ...p, user: updatedUser } : p));
+        } catch (err) {
+            console.error(err);
+            alert(`Failed to update image: ${err?.message || 'Unknown error'}`);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleProfilePhotoSelected = async (e) => {
+        const file = e.target.files?.[0];
+        await updateProfileImage('profilePicture', file);
+        e.target.value = '';
+    };
+
+    const handleCoverPhotoSelected = async (e) => {
+        const file = e.target.files?.[0];
+        await updateProfileImage('coverPicture', file);
+        e.target.value = '';
+    };
+
     return (
         <div className="profile-page-container">
             <Navbar />
@@ -472,9 +556,11 @@ const ProfilePage = () => {
                                     education={profile.education}
                                     jobPreference={profile.jobPreference}
                                     onEditIntro={isMyProfile ? () => setModal('intro') : undefined}
+                                    onEditProfilePicture={isMyProfile ? () => profilePhotoInputRef.current?.click() : undefined}
+                                    onEditCoverPicture={isMyProfile ? () => coverPhotoInputRef.current?.click() : undefined}
                                 />
                                 <AnalyticsCard analytics={profile.analytics} />
-                                <ActivityCard user={profile.user} posts={posts} />
+                                <ActivityCard user={profile.user} posts={posts} onPostCreated={refresh} />
                                 <ExperienceCard
                                     experiences={profile.experience}
                                     education={profile.education}
@@ -894,6 +980,21 @@ const ProfilePage = () => {
                     saving={saving}
                 />
             )}
+
+            <input
+                ref={profilePhotoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleProfilePhotoSelected}
+            />
+            <input
+                ref={coverPhotoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleCoverPhotoSelected}
+            />
         </div>
     );
 };
