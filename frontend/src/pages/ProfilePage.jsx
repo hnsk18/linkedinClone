@@ -538,7 +538,6 @@ const ProfilePage = () => {
         await updateProfileImage('coverPicture', file);
         e.target.value = '';
     };
-
     return (
         <div className="profile-page-container">
             <Navbar />
@@ -980,7 +979,6 @@ const ProfilePage = () => {
                     saving={saving}
                 />
             )}
-
             <input
                 ref={profilePhotoInputRef}
                 type="file"

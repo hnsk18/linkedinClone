@@ -211,7 +211,6 @@ const ActivityCard = ({ user, posts, onPostCreated }) => {
                     </div>
                 </div>
             )}
-
             <div className="card-footer">
                 Show all posts <FaArrowRight className="footer-icon" />
             </div>
