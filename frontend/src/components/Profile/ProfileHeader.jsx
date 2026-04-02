@@ -4,7 +4,7 @@ import { MdVerified } from 'react-icons/md';
 import { FaPen, FaCamera } from 'react-icons/fa';
 import AddProfileSectionModal from './AddProfileSectionModal';
 
-const ProfileHeader = ({ user, experience, education, jobPreference, onEditIntro, onOpenModal, onOpenConnections }) => {
+const ProfileHeader = ({ user, experience, education, jobPreference, isMyProfile, onEditIntro, onOpenModal, onOpenConnections, connectionStatus, onConnect, onMessage, onPhotoUpload }) => {
     const name = user?.name || 'Your name';
     const headline = user?.headline || 'Add a headline to your profile';
     const location = user?.location || 'Add your location';
@@ -19,15 +19,32 @@ const ProfileHeader = ({ user, experience, education, jobPreference, onEditIntro
 
     return (
         <div className="card profile-header-container">
-            <div className="profile-cover">
-                <button className="edit-cover-btn"><FaCamera /></button>
+            <div className="profile-cover" style={{ backgroundImage: user?.coverPicture ? `url(${user.coverPicture})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                {isMyProfile && (
+                    <>
+                        <button className="edit-cover-btn" onClick={() => document.getElementById('coverPhotoInput').click()}><FaCamera /></button>
+                        <input type="file" id="coverPhotoInput" hidden accept="image/*" onChange={(e) => onPhotoUpload && onPhotoUpload('cover', e.target.files[0])} />
+                    </>
+                )}
             </div>
 
             <div className="profile-info-section">
                 <div className="profile-photo-container">
-                    <div className="profile-photo">
-                        <span className="photo-initial">{initial}</span>
+                    <div className="profile-photo" style={{ position: 'relative' }}>
+                        {user?.profilePicture ? (
+                            <img src={user.profilePicture} alt={name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                        ) : (
+                            <span className="photo-initial">{initial}</span>
+                        )}
                         <div className="open-to-work-frame">#OPENTOWORK</div>
+                        {isMyProfile && (
+                            <>
+                                <button className="edit-photo-btn" onClick={() => document.getElementById('profilePhotoInput').click()} style={{ position: 'absolute', bottom: 10, right: 10, borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid #ccc', cursor: 'pointer', zIndex: 10, color: '#666' }}>
+                                    <FaCamera />
+                                </button>
+                                <input type="file" id="profilePhotoInput" hidden accept="image/*" onChange={(e) => onPhotoUpload && onPhotoUpload('profile', e.target.files[0])} />
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -52,10 +69,31 @@ const ProfileHeader = ({ user, experience, education, jobPreference, onEditIntro
                         </button>
 
                         <div className="profile-action-buttons">
-                            <button className="btn-primary">Open to</button>
-                            <button className="btn-outline-primary" onClick={() => setIsAddSectionModalOpen(true)}>Add profile section</button>
-                            <button className="btn-outline">Enhance profile</button>
-                            <button className="btn-outline">Resources</button>
+                            {isMyProfile ? (
+                                <>
+                                    <button className="btn-primary">Open to</button>
+                                    <button className="btn-outline-primary" onClick={() => setIsAddSectionModalOpen(true)}>Add profile section</button>
+                                    <button className="btn-outline">Enhance profile</button>
+                                    <button className="btn-outline">Resources</button>
+                                </>
+                            ) : (
+                                <>
+                                    <button className="btn-primary" onClick={onMessage}>Message</button>
+                                    {connectionStatus === 'NONE' && (
+                                        <button className="btn-outline-primary" onClick={onConnect}>Connect</button>
+                                    )}
+                                    {connectionStatus === 'PENDING_OUTGOING' && (
+                                        <button className="btn-outline-primary" disabled>Pending</button>
+                                    )}
+                                    {connectionStatus === 'PENDING_INCOMING' && (
+                                        <button className="btn-outline-primary" disabled>Accept/Deny</button>
+                                    )}
+                                    {connectionStatus === 'CONNECTED' && (
+                                        <button className="btn-outline-primary" disabled>Connected</button>
+                                    )}
+                                    <button className="btn-outline">More</button>
+                                </>
+                            )}
                         </div>
                     </div>
 

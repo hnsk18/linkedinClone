@@ -89,11 +89,12 @@ const Navbar = () => {
         };
     }, [query, token]);
 
-    const onSelect = (userId) => {
+    const onSelect = (user) => {
         setOpen(false);
         setQuery("");
         setResults([]);
-        navigate(`/profile/${userId}`);
+        const identifier = user.username || user.id;
+        navigate(`/in/${identifier}`);
     };
 
     return (
@@ -127,7 +128,7 @@ const Navbar = () => {
                                         key={u.id}
                                         type="button"
                                         className="search-dropdown-item"
-                                        onClick={() => onSelect(u.id)}
+                                        onClick={() => onSelect(u)}
                                         role="option"
                                     >
                                         <div className="search-avatar">

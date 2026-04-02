@@ -71,7 +71,7 @@ export default function AppRoutes() {
         }
       />
       <Route
-        path="/profile/:userId"
+        path="/in/:username"
         element={
           <ProtectedRoute>
             <ProfilePage />
