@@ -44,6 +44,7 @@ public class JobPreference {
         this.id = id;
     }
 
+    @JsonIgnore
     public User getUser() {
         return user;
     }

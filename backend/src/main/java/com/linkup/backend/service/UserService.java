@@ -5,6 +5,7 @@ import com.linkup.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -30,6 +31,11 @@ public class UserService {
 
         if(userRepository.findByEmailIgnoreCase(normalizedEmail) != null){
             throw new RuntimeException("Email already exists");
+        }
+
+        if (user.getUsername() == null || user.getUsername().isBlank()) {
+            String base = user.getName().toLowerCase().replaceAll("[^a-z0-9]", "-");
+            user.setUsername(base + "-" + UUID.randomUUID().toString().substring(0, 6));
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));

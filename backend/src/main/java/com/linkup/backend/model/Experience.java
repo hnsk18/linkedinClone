@@ -2,6 +2,7 @@ package com.linkup.backend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 public class Experience {
@@ -37,6 +38,7 @@ public class Experience {
         this.id = id;
     }
 
+    @JsonIgnore
     public User getUser() {
         return user;
     }

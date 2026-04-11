@@ -22,15 +22,15 @@ public class ProfileController {
     @Autowired
     private ProfileService profileService;
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<Map<String, Object>> getProfile(@PathVariable Long userId) {
-        Map<String, Object> profile = profileService.getProfile(userId);
+    @GetMapping("/{identifier}")
+    public ResponseEntity<Map<String, Object>> getProfile(@PathVariable String identifier) {
+        Map<String, Object> profile = profileService.getProfile(identifier);
         return ResponseEntity.ok(profile);
     }
 
-    @GetMapping("/{userId}/posts")
-    public ResponseEntity<List<Post>> getUserPosts(@PathVariable Long userId) {
-        List<Post> posts = profileService.getUserPosts(userId);
+    @GetMapping("/{identifier}/posts")
+    public ResponseEntity<List<Post>> getUserPosts(@PathVariable String identifier) {
+        List<Post> posts = profileService.getUserPosts(identifier);
         return ResponseEntity.ok(posts);
     }
 

@@ -1,6 +1,7 @@
 package com.linkup.backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 public class UserSkill {
@@ -27,6 +28,7 @@ public class UserSkill {
         this.id = id;
     }
 
+    @JsonIgnore
     public User getUser() {
         return user;
     }

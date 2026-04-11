@@ -8,8 +8,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+
+    Optional<User> findByUsername(String username);
 
     User findByEmail(String email);
 
@@ -20,6 +23,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             where
               lower(u.name) like lower(concat('%', :q, '%'))
               or lower(u.email) like lower(concat('%', :q, '%'))
+              or lower(u.username) like lower(concat('%', :q, '%'))
               or lower(u.headline) like lower(concat('%', :q, '%'))
               or lower(u.location) like lower(concat('%', :q, '%'))
             """)

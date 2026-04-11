@@ -40,9 +40,21 @@ public class ProfileService {
     @Autowired
     private JobPreferenceRepository jobPreferenceRepository;
 
-    public Map<String, Object> getProfile(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    private User findUserByIdentifier(String identifier) {
+        User user = null;
+        try {
+            Long id = Long.parseLong(identifier);
+            user = userRepository.findById(id).orElse(null);
+        } catch (NumberFormatException e) {
+        }
+        if (user == null) {
+            user = userRepository.findByUsername(identifier).orElseThrow(() -> new RuntimeException("User not found"));
+        }
+        return user;
+    }
+
+    public Map<String, Object> getProfile(String identifier) {
+        User user = findUserByIdentifier(identifier);
 
         List<Experience> experiences = experienceRepository.findByUserOrderByStartDateDesc(user);
         List<Education> educationList = educationRepository.findByUserOrderByStartYearDesc(user);
@@ -70,9 +82,8 @@ public class ProfileService {
         return result;
     }
 
-    public List<Post> getUserPosts(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public List<Post> getUserPosts(String identifier) {
+        User user = findUserByIdentifier(identifier);
 
         if (user.getEmail() == null) {
             throw new RuntimeException("User email is not set");

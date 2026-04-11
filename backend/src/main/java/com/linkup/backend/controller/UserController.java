@@ -16,6 +16,14 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.UUID;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/users")
@@ -61,6 +69,54 @@ public class UserController {
     public ResponseEntity<User> updateIntro(@PathVariable Long userId, @RequestBody User patch) {
         User updated = userService.updateIntro(userId, patch);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping("/{userId}/photo")
+    public ResponseEntity<?> uploadPhoto(
+            @PathVariable Long userId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("type") String type,
+            HttpServletRequest request) {
+        
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body("User not found");
+        }
+        
+        try {
+            String dirPath = "uploads";
+            File dir = new File(dirPath);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            
+            String originalFileName = file.getOriginalFilename();
+            String extension = "";
+            if (originalFileName != null && originalFileName.contains(".")) {
+                extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+            }
+            
+            String newFileName = UUID.randomUUID().toString() + extension;
+            Path filePath = Paths.get(dirPath, newFileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+            
+            String fileUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/uploads/" + newFileName;
+            
+            if ("profile".equalsIgnoreCase(type)) {
+                user.setProfilePicture(fileUrl);
+            } else if ("cover".equalsIgnoreCase(type)) {
+                user.setCoverPicture(fileUrl);
+            } else {
+                return ResponseEntity.badRequest().body("Invalid photo type. Use 'profile' or 'cover'.");
+            }
+            
+            userRepository.save(user);
+            return ResponseEntity.ok(user);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Photo upload failed: " + e.getMessage());
+        }
     }
 
     @GetMapping("/me")
@@ -122,7 +178,7 @@ public class UserController {
         return ResponseEntity.ok(out);
     }
 
-    public record UserSearchResult(Long id, String name, String headline, String location, String email) {
+    public record UserSearchResult(Long id, String username, String name, String headline, String location, String email) {
     }
 
     @GetMapping("/search")
@@ -137,7 +193,7 @@ public class UserController {
         List<User> users = userRepository.searchUsers(query, PageRequest.of(0, safeLimit));
 
         List<UserSearchResult> out = users.stream()
-                .map(u -> new UserSearchResult(u.getId(), u.getName(), u.getHeadline(), u.getLocation(), u.getEmail()))
+                .map(u -> new UserSearchResult(u.getId(), u.getUsername(), u.getName(), u.getHeadline(), u.getLocation(), u.getEmail()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(out);
