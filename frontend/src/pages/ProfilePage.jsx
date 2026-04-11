@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import ProfileHeader from '../components/Profile/ProfileHeader';
@@ -27,6 +27,8 @@ const ProfilePage = () => {
     const [modal, setModal] = useState(null); // 'intro' | 'experience' | 'education' | 'skill' | 'cert' | 'editExperience' | 'editEducation' | 'editCert' | 'editSkills'
     const [saving, setSaving] = useState(false);
     const [selectedId, setSelectedId] = useState(null);
+    const profilePhotoInputRef = useRef(null);
+    const coverPhotoInputRef = useRef(null);
 
     const [me, setMe] = useState(null);
 
@@ -468,6 +470,10 @@ const ProfilePage = () => {
 
     const uploadPhoto = async (type, file) => {
         if (!isMyProfile || !file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file.');
+            return;
+        }
         try {
             setSaving(true);
             const formData = new FormData();
@@ -484,7 +490,7 @@ const ProfilePage = () => {
 
             if (!res.ok) throw new Error(`Failed to upload ${type} photo`);
             const updatedUser = await res.json();
-            
+
             setProfile((p) => (p ? { ...p, user: updatedUser } : p));
             setMe((m) => (m ? { ...m, ...updatedUser } : m));
         } catch (err) {
@@ -495,6 +501,17 @@ const ProfilePage = () => {
         }
     };
 
+    const handleProfilePhotoSelected = async (e) => {
+        const file = e.target.files?.[0];
+        await uploadPhoto('profile', file);
+        e.target.value = '';
+    };
+
+    const handleCoverPhotoSelected = async (e) => {
+        const file = e.target.files?.[0];
+        await uploadPhoto('cover', file);
+        e.target.value = '';
+    };
     return (
         <div className="profile-page-container">
             <Navbar />
@@ -516,10 +533,11 @@ const ProfilePage = () => {
                                     connectionStatus={connectionStatus}
                                     onConnect={sendConnectRequest}
                                     onMessage={openMessage}
-                                    onPhotoUpload={uploadPhoto}
+                                    onEditProfilePicture={isMyProfile ? () => profilePhotoInputRef.current?.click() : undefined}
+                                    onEditCoverPicture={isMyProfile ? () => coverPhotoInputRef.current?.click() : undefined}
                                 />
                                 <AnalyticsCard analytics={profile.analytics} />
-                                <ActivityCard user={profile.user} posts={posts} />
+                                <ActivityCard user={profile.user} posts={posts} onPostCreated={refresh} />
                                 <ExperienceCard
                                     experiences={profile.experience}
                                     education={profile.education}
@@ -936,6 +954,20 @@ const ProfilePage = () => {
                     saving={saving}
                 />
             )}
+            <input
+                ref={profilePhotoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleProfilePhotoSelected}
+            />
+            <input
+                ref={coverPhotoInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={handleCoverPhotoSelected}
+            />
         </div>
     );
 };

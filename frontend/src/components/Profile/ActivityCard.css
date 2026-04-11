@@ -117,3 +117,121 @@
 .like-icon {
     color: #0A66C2;
 }
+
+.activity-create-post-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.activity-create-post-modal {
+    width: min(680px, 92vw);
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+    padding: 16px;
+}
+
+.activity-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.activity-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--li-text-primary);
+}
+
+.activity-modal-close {
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--li-text-secondary);
+}
+
+.activity-create-post-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    resize: vertical;
+    min-height: 120px;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.activity-post-file-hidden {
+    display: none;
+}
+
+.activity-post-media-preview {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.activity-post-media-item {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.activity-post-media-item img,
+.activity-post-media-item video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.activity-post-media-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    cursor: pointer;
+}
+
+.activity-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.activity-modal-actions-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.activity-modal-action-btn {
+    border: none;
+    background: transparent;
+    color: var(--li-text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 18px;
+    cursor: pointer;
+}
+
+.activity-modal-action-btn:hover {
+    background: var(--li-border-light);
+}

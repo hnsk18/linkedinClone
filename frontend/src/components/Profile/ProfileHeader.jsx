@@ -4,7 +4,21 @@ import { MdVerified } from 'react-icons/md';
 import { FaPen, FaCamera } from 'react-icons/fa';
 import AddProfileSectionModal from './AddProfileSectionModal';
 
-const ProfileHeader = ({ user, experience, education, jobPreference, isMyProfile, onEditIntro, onOpenModal, onOpenConnections, connectionStatus, onConnect, onMessage, onPhotoUpload }) => {
+const ProfileHeader = ({
+    user,
+    experience,
+    education,
+    jobPreference,
+    isMyProfile,
+    onEditIntro,
+    onOpenModal,
+    onOpenConnections,
+    connectionStatus,
+    onConnect,
+    onMessage,
+    onEditProfilePicture,
+    onEditCoverPicture
+}) => {
     const name = user?.name || 'Your name';
     const headline = user?.headline || 'Add a headline to your profile';
     const location = user?.location || 'Add your location';
@@ -19,33 +33,37 @@ const ProfileHeader = ({ user, experience, education, jobPreference, isMyProfile
 
     return (
         <div className="card profile-header-container">
-            <div className="profile-cover" style={{ backgroundImage: user?.coverPicture ? `url(${user.coverPicture})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            <div
+                className="profile-cover"
+                style={user?.coverPicture ? { backgroundImage: `url(${user.coverPicture})` } : undefined}
+            >
                 {isMyProfile && (
-                    <>
-                        <button className="edit-cover-btn" onClick={() => document.getElementById('coverPhotoInput').click()}><FaCamera /></button>
-                        <input type="file" id="coverPhotoInput" hidden accept="image/*" onChange={(e) => onPhotoUpload && onPhotoUpload('cover', e.target.files[0])} />
-                    </>
+                    <button
+                        className="edit-cover-btn"
+                        type="button"
+                        onClick={onEditCoverPicture}
+                        aria-label="Edit cover photo"
+                    >
+                        <FaCamera />
+                    </button>
                 )}
             </div>
 
             <div className="profile-info-section">
                 <div className="profile-photo-container">
-                    <div className="profile-photo" style={{ position: 'relative' }}>
+                    <button
+                        className="profile-photo"
+                        type="button"
+                        onClick={isMyProfile ? onEditProfilePicture : undefined}
+                        aria-label={isMyProfile ? 'Edit profile photo' : 'Profile photo'}
+                    >
                         {user?.profilePicture ? (
-                            <img src={user.profilePicture} alt={name} style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                            <img src={user.profilePicture} alt={`${name} profile`} className="profile-photo-image" />
                         ) : (
                             <span className="photo-initial">{initial}</span>
                         )}
                         <div className="open-to-work-frame">#OPENTOWORK</div>
-                        {isMyProfile && (
-                            <>
-                                <button className="edit-photo-btn" onClick={() => document.getElementById('profilePhotoInput').click()} style={{ position: 'absolute', bottom: 10, right: 10, borderRadius: '50%', width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white', border: '1px solid #ccc', cursor: 'pointer', zIndex: 10, color: '#666' }}>
-                                    <FaCamera />
-                                </button>
-                                <input type="file" id="profilePhotoInput" hidden accept="image/*" onChange={(e) => onPhotoUpload && onPhotoUpload('profile', e.target.files[0])} />
-                            </>
-                        )}
-                    </div>
+                    </button>
                 </div>
 
                 <div className="profile-actions-top">
