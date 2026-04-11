@@ -2,8 +2,10 @@ package com.linkup.backend.service;
 
 import com.linkup.backend.model.Post;
 import com.linkup.backend.model.PostReaction;
+import com.linkup.backend.model.User;
 import com.linkup.backend.repository.PostReactionRepository;
 import com.linkup.backend.repository.PostRepository;
+import com.linkup.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,12 @@ public class PostReactionService {
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional
     public void setReaction(Long postId, String userEmail, String userName, String type) {
         if (type == null || type.isBlank() || "NONE".equalsIgnoreCase(type)) {
@@ -44,6 +52,8 @@ public class PostReactionService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new NoSuchElementException("Post not found"));
 
+        boolean firstReactionFromUser = reactionRepository.findByPostIdAndUserEmail(postId, userEmail).isEmpty();
+
         PostReaction reaction = reactionRepository.findByPostIdAndUserEmail(postId, userEmail)
                 .orElseGet(PostReaction::new);
 
@@ -53,6 +63,14 @@ public class PostReactionService {
         reaction.setType(normalized);
 
         reactionRepository.save(reaction);
+
+        if (firstReactionFromUser && post.getAuthorEmail() != null) {
+            User actor = userRepository.findByEmailIgnoreCase(userEmail.trim());
+            Long actorId = actor != null ? actor.getId() : null;
+            String displayName = (userName == null || userName.isBlank()) ? userEmail : userName;
+            notificationService.notifyPostReaction(
+                    post.getAuthorEmail(), userEmail, actorId, displayName, postId, normalized);
+        }
     }
 
     public Map<String, Long> getCountsByType(Long postId) {

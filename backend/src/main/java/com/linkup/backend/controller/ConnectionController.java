@@ -52,7 +52,17 @@ public class ConnectionController {
         return ResponseEntity.ok(new StatusResponse(s));
     }
 
-    public record SendRequestBody(Long toUserId) {}
+    public static class SendRequestBody {
+        private Long toUserId;
+
+        public Long getToUserId() {
+            return toUserId;
+        }
+
+        public void setToUserId(Long toUserId) {
+            this.toUserId = toUserId;
+        }
+    }
 
     @PostMapping("/request")
     public ResponseEntity<?> request(
@@ -61,10 +71,10 @@ public class ConnectionController {
     ) {
         User me = requireMe(authHeader);
         if (me == null) return ResponseEntity.status(401).body("Missing or invalid token");
-        if (body == null || body.toUserId() == null) return ResponseEntity.badRequest().body("Missing toUserId");
+        if (body == null || body.getToUserId() == null) return ResponseEntity.badRequest().body("Missing toUserId");
 
         try {
-            ConnectionRequest req = connectionService.sendRequest(me.getId(), body.toUserId());
+            ConnectionRequest req = connectionService.sendRequest(me.getId(), body.getToUserId());
             return ResponseEntity.ok(req);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -83,7 +93,9 @@ public class ConnectionController {
             String createdAt
     ) {}
 
-    public record ConnectionItem(Long userId, String name, String headline, String location, String email) {}
+    public record ConnectionItem(Long userId, String name, String headline, String location, String email, String username) {}
+
+    public record NetworkSuggestionsResponse(List<ConnectionItem> mutualConnections, List<ConnectionItem> peopleYouMayKnow) {}
 
     @GetMapping("/list")
     public ResponseEntity<?> list(
@@ -94,9 +106,26 @@ public class ConnectionController {
 
         List<User> users = connectionService.listConnections(me.getId());
         List<ConnectionItem> out = users.stream()
-                .map(u -> new ConnectionItem(u.getId(), u.getName(), u.getHeadline(), u.getLocation(), u.getEmail()))
+                .map(u -> new ConnectionItem(u.getId(), u.getName(), u.getHeadline(), u.getLocation(), u.getEmail(), u.getUsername()))
                 .toList();
         return ResponseEntity.ok(out);
+    }
+
+    @GetMapping("/suggestions")
+    public ResponseEntity<?> suggestions(
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        User me = requireMe(authHeader);
+        if (me == null) return ResponseEntity.status(401).body("Missing or invalid token");
+
+        ConnectionService.NetworkSuggestions buckets = connectionService.listNetworkSuggestions(me.getId(), 40);
+        List<ConnectionItem> mutual = buckets.mutualConnections.stream()
+                .map(u -> new ConnectionItem(u.getId(), u.getName(), u.getHeadline(), u.getLocation(), u.getEmail(), u.getUsername()))
+                .toList();
+        List<ConnectionItem> discover = buckets.peopleYouMayKnow.stream()
+                .map(u -> new ConnectionItem(u.getId(), u.getName(), u.getHeadline(), u.getLocation(), u.getEmail(), u.getUsername()))
+                .toList();
+        return ResponseEntity.ok(new NetworkSuggestionsResponse(mutual, discover));
     }
 
     @GetMapping("/requests/incoming")
@@ -120,6 +149,46 @@ public class ConnectionController {
                     from != null ? from.getHeadline() : null,
                     from != null ? from.getLocation() : null,
                     from != null ? from.getEmail() : null,
+                    r.getCreatedAt() != null ? r.getCreatedAt().toString() : null
+            );
+        }).toList();
+
+        return ResponseEntity.ok(out);
+    }
+
+    public record OutgoingRequestItem(
+            Long requestId,
+            Long toUserId,
+            String toName,
+            String toHeadline,
+            String toLocation,
+            String toEmail,
+            String toUsername,
+            String createdAt
+    ) {}
+
+    @GetMapping("/requests/outgoing")
+    public ResponseEntity<?> outgoing(
+            @RequestHeader(value = "Authorization", required = false) String authHeader
+    ) {
+        User me = requireMe(authHeader);
+        if (me == null) return ResponseEntity.status(401).body("Missing or invalid token");
+
+        List<ConnectionRequest> reqs = connectionService.listOutgoingPending(me.getId());
+        List<Long> toIds = reqs.stream().map(ConnectionRequest::getReceiverId).distinct().toList();
+        Map<Long, User> byId = userRepository.findAllById(toIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
+        List<OutgoingRequestItem> out = reqs.stream().map(r -> {
+            User to = byId.get(r.getReceiverId());
+            return new OutgoingRequestItem(
+                    r.getId(),
+                    r.getReceiverId(),
+                    to != null ? to.getName() : null,
+                    to != null ? to.getHeadline() : null,
+                    to != null ? to.getLocation() : null,
+                    to != null ? to.getEmail() : null,
+                    to != null ? to.getUsername() : null,
                     r.getCreatedAt() != null ? r.getCreatedAt().toString() : null
             );
         }).toList();

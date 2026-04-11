@@ -11,8 +11,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class ConnectionService {
@@ -32,6 +36,9 @@ public class ConnectionService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     public ConnectionStatus getStatus(Long meId, Long otherId) {
         if (meId == null || otherId == null || meId.equals(otherId)) return ConnectionStatus.NONE;
@@ -113,6 +120,8 @@ public class ConnectionService {
 
         bumpConnectionsCount(a);
         bumpConnectionsCount(b);
+
+        notificationService.notifyConnectionAccepted(req.getRequesterId(), meId, req.getId());
     }
 
     @Transactional
@@ -125,6 +134,12 @@ public class ConnectionService {
         req.setStatus(ConnectionRequest.Status.REJECTED);
         req.setRespondedAt(LocalDateTime.now());
         requestRepository.save(req);
+
+        notificationService.notifyConnectionRejected(req.getRequesterId(), meId, req.getId());
+    }
+
+    public List<ConnectionRequest> listOutgoingPending(Long meId) {
+        return requestRepository.findByRequesterIdAndStatusOrderByCreatedAtDesc(meId, ConnectionRequest.Status.PENDING);
     }
 
     private void bumpConnectionsCount(Long userId) {
@@ -133,6 +148,58 @@ public class ConnectionService {
         Integer c = u.getConnectionsCount();
         u.setConnectionsCount((c == null ? 0 : c) + 1);
         userRepository.save(u);
+    }
+
+    public static class NetworkSuggestions {
+        public final List<User> mutualConnections;
+        public final List<User> peopleYouMayKnow;
+
+        public NetworkSuggestions(List<User> mutualConnections, List<User> peopleYouMayKnow) {
+            this.mutualConnections = mutualConnections;
+            this.peopleYouMayKnow = peopleYouMayKnow;
+        }
+    }
+
+    /**
+     * 2nd-degree suggestions (connections of your connections) plus users you are not connected to.
+     */
+    public NetworkSuggestions listNetworkSuggestions(Long meId, int discoverLimit) {
+        Set<Long> exclude = buildSuggestionExcludeIds(meId);
+        LinkedHashSet<Long> foafIds = new LinkedHashSet<>();
+        for (User conn : listConnections(meId)) {
+            for (User friend : listConnections(conn.getId())) {
+                Long fid = friend.getId();
+                if (!exclude.contains(fid)) {
+                    foafIds.add(fid);
+                }
+            }
+        }
+        List<User> mutual = foafIds.isEmpty() ? List.of() : userRepository.findAllById(foafIds);
+
+        Set<Long> discoverExclude = new HashSet<>(exclude);
+        for (User u : mutual) {
+            discoverExclude.add(u.getId());
+        }
+        int cap = discoverLimit <= 0 ? 40 : Math.min(discoverLimit, 200);
+        List<User> discover = new ArrayList<>();
+        for (User u : userRepository.findAll()) {
+            if (discoverExclude.contains(u.getId())) continue;
+            discover.add(u);
+            if (discover.size() >= cap) break;
+        }
+        return new NetworkSuggestions(mutual, discover);
+    }
+
+    private Set<Long> buildSuggestionExcludeIds(Long meId) {
+        Set<Long> exclude = new HashSet<>();
+        exclude.add(meId);
+        for (User u : listConnections(meId)) {
+            exclude.add(u.getId());
+        }
+        for (ConnectionRequest r : requestRepository.findByRequesterIdAndStatus(meId, ConnectionRequest.Status.PENDING)) {
+            exclude.add(r.getReceiverId());
+        }
+        return exclude;
     }
 }
 

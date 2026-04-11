@@ -22,6 +22,7 @@ const ProfilePage = () => {
     const navigate = useNavigate();
     const [profile, setProfile] = useState(null);
     const [posts, setPosts] = useState([]);
+    const [activity, setActivity] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [modal, setModal] = useState(null); // 'intro' | 'experience' | 'education' | 'skill' | 'cert' | 'editExperience' | 'editEducation' | 'editCert' | 'editSkills'
@@ -45,6 +46,8 @@ const ProfilePage = () => {
     const fetchIdentifier = routeIdentifier ?? me?.username ?? me?.id ?? null;
     const isMyProfile = !routeIdentifier || (me?.id != null && (routeIdentifier === String(me.id) || routeIdentifier === me.username));
     const [connectionStatus, setConnectionStatus] = useState('LOADING');
+    const [myConnections, setMyConnections] = useState(null);
+    const [showConnectionsModal, setShowConnectionsModal] = useState(false);
 
     useEffect(() => {
         const loadMe = async () => {
@@ -80,9 +83,10 @@ const ProfilePage = () => {
                 setLoading(true);
                 setError(null);
 
-                const [profileRes, postsRes] = await Promise.all([
+                const [profileRes, postsRes, activityRes] = await Promise.all([
                     fetch(`${API_BASE}/api/profile/${fetchIdentifier}`),
-                    fetch(`${API_BASE}/api/profile/${fetchIdentifier}/posts`)
+                    fetch(`${API_BASE}/api/profile/${fetchIdentifier}/posts`),
+                    fetch(`${API_BASE}/api/profile/${fetchIdentifier}/activity`)
                 ]);
 
                 if (!profileRes.ok) {
@@ -97,6 +101,11 @@ const ProfilePage = () => {
 
                 setProfile(profileData);
                 setPosts(postsData);
+                if (activityRes.ok) {
+                    setActivity(await activityRes.json());
+                } else {
+                    setActivity(null);
+                }
             } catch (e) {
                 console.error('Failed to load profile', e);
                 setError('Could not load profile data. Please try again.');
@@ -131,6 +140,29 @@ const ProfilePage = () => {
         loadStatus();
     }, [token, isMyProfile, profile?.user?.id]);
 
+    useEffect(() => {
+        if (!token || !isMyProfile) {
+            setMyConnections(null);
+            return;
+        }
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/connections/list`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!res.ok) return;
+                const data = await res.json();
+                setMyConnections(Array.isArray(data) ? data : []);
+            } catch (e) {
+                console.error("Failed to load my connections", e);
+            }
+        })();
+    }, [token, isMyProfile]);
+
+    const displayConnectionsCount = isMyProfile
+        ? (myConnections !== null ? myConnections.length : (profile?.user?.connectionsCount ?? 0))
+        : (profile?.user?.connectionsCount ?? 0);
+
     const sendConnectRequest = async () => {
         if (!token || !profile?.user?.id) return;
         try {
@@ -160,12 +192,14 @@ const ProfilePage = () => {
     };
 
     const refresh = async () => {
-        const [profileRes, postsRes] = await Promise.all([
+        const [profileRes, postsRes, activityRes] = await Promise.all([
             fetch(`${API_BASE}/api/profile/${fetchIdentifier}`),
-            fetch(`${API_BASE}/api/profile/${fetchIdentifier}/posts`)
+            fetch(`${API_BASE}/api/profile/${fetchIdentifier}/posts`),
+            fetch(`${API_BASE}/api/profile/${fetchIdentifier}/activity`)
         ]);
         if (profileRes.ok) setProfile(await profileRes.json());
         if (postsRes.ok) setPosts(await postsRes.json());
+        if (activityRes.ok) setActivity(await activityRes.json());
     };
 
     const saveIntro = async (e) => {
@@ -474,28 +508,40 @@ const ProfilePage = () => {
             alert('Please select an image file.');
             return;
         }
+        const ownerId = me?.id ?? profile?.user?.id;
+        if (!ownerId) {
+            alert('Still loading your account. Try again in a moment.');
+            return;
+        }
+        if (!token) {
+            alert('Please sign in again.');
+            return;
+        }
         try {
             setSaving(true);
             const formData = new FormData();
             formData.append('file', file);
             formData.append('type', type);
 
-            const res = await fetch(`${API_BASE}/api/users/${me.id}/photo?type=${type}`, {
+            const res = await fetch(`${API_BASE}/api/users/${ownerId}/photo`, {
                 method: "POST",
                 headers: {
-                    ...(token ? { Authorization: `Bearer ${token}` } : {})
+                    Authorization: `Bearer ${token}`
                 },
                 body: formData
             });
 
-            if (!res.ok) throw new Error(`Failed to upload ${type} photo`);
+            if (!res.ok) {
+                const errText = await res.text().catch(() => '');
+                throw new Error(errText || `Failed to upload ${type} photo`);
+            }
             const updatedUser = await res.json();
 
             setProfile((p) => (p ? { ...p, user: updatedUser } : p));
             setMe((m) => (m ? { ...m, ...updatedUser } : m));
         } catch (err) {
             console.error(err);
-            alert(`Failed to upload ${type} photo`);
+            alert(err?.message || `Failed to upload ${type} photo`);
         } finally {
             setSaving(false);
         }
@@ -530,6 +576,8 @@ const ProfilePage = () => {
                                     jobPreference={profile.jobPreference}
                                     isMyProfile={isMyProfile}
                                     onEditIntro={isMyProfile ? () => setModal('intro') : undefined}
+                                    connectionsCount={displayConnectionsCount}
+                                    onOpenConnections={isMyProfile ? () => setShowConnectionsModal(true) : undefined}
                                     connectionStatus={connectionStatus}
                                     onConnect={sendConnectRequest}
                                     onMessage={openMessage}
@@ -537,7 +585,7 @@ const ProfilePage = () => {
                                     onEditCoverPicture={isMyProfile ? () => coverPhotoInputRef.current?.click() : undefined}
                                 />
                                 <AnalyticsCard analytics={profile.analytics} />
-                                <ActivityCard user={profile.user} posts={posts} onPostCreated={refresh} />
+                                <ActivityCard user={profile.user} posts={posts} activity={activity} onPostCreated={refresh} />
                                 <ExperienceCard
                                     experiences={profile.experience}
                                     education={profile.education}
@@ -583,6 +631,42 @@ const ProfilePage = () => {
                     </div>
                 </div>
             </main>
+
+            {showConnectionsModal && (
+                <Modal title="Connections" onClose={() => setShowConnectionsModal(false)}>
+                    {!myConnections?.length ? (
+                        <p className="text-secondary" style={{ margin: 0 }}>No connections yet.</p>
+                    ) : (
+                        <ul className="lu-connections-modal-list" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+                            {myConnections.map((c) => (
+                                <li key={c.userId} style={{ borderBottom: '1px solid #eee' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const path = c.username ? `/in/${c.username}` : `/profile/${c.userId}`;
+                                            navigate(path);
+                                            setShowConnectionsModal(false);
+                                        }}
+                                        style={{
+                                            display: 'block',
+                                            width: '100%',
+                                            textAlign: 'left',
+                                            padding: '12px 4px',
+                                            border: 'none',
+                                            background: 'none',
+                                            cursor: 'pointer',
+                                            fontSize: '1rem',
+                                            color: '#0a66c2'
+                                        }}
+                                    >
+                                        {c.name || c.email || 'Member'}
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </Modal>
+            )}
 
             {modal === 'intro' && (
                 <Modal title="Edit intro" onClose={() => setModal(null)}>

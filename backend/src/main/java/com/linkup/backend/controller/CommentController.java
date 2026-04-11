@@ -47,7 +47,9 @@ public class CommentController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Comment content cannot be empty");
             }
 
-            User user = userRepository.findByEmail(email);
+            User user = (email != null && !email.isBlank())
+                    ? userRepository.findByEmailIgnoreCase(email.trim())
+                    : null;
             String authorName = (user != null && user.getName() != null && !user.getName().isBlank())
                     ? user.getName() : email;
 

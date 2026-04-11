@@ -2,8 +2,10 @@ package com.linkup.backend.service;
 
 import com.linkup.backend.model.Comment;
 import com.linkup.backend.model.Post;
+import com.linkup.backend.model.User;
 import com.linkup.backend.repository.CommentRepository;
 import com.linkup.backend.repository.PostRepository;
+import com.linkup.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,12 @@ public class CommentService {
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
     public Comment createComment(Long postId, Comment comment, String authorEmail, String authorName) {
         Optional<Post> post = postRepository.findById(postId);
         if (post.isEmpty()) {
@@ -28,7 +36,19 @@ public class CommentService {
         comment.setPost(post.get());
         comment.setAuthorEmail(authorEmail);
         comment.setAuthorName(authorName);
-        return commentRepository.save(comment);
+        Comment saved = commentRepository.save(comment);
+
+        User commenter = userRepository.findByEmailIgnoreCase(authorEmail.trim());
+        Long commenterId = commenter != null ? commenter.getId() : null;
+        notificationService.notifyPostComment(
+                post.get().getAuthorEmail(),
+                authorEmail,
+                commenterId,
+                authorName,
+                postId,
+                saved.getContent());
+
+        return saved;
     }
 
     public List<Comment> getCommentsByPostId(Long postId) {

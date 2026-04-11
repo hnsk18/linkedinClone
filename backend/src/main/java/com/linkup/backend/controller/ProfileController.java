@@ -34,6 +34,12 @@ public class ProfileController {
         return ResponseEntity.ok(posts);
     }
 
+    /** Activity section: followers count, posts with like/comment counts, comments tab, videos tab. */
+    @GetMapping("/{identifier}/activity")
+    public ResponseEntity<Map<String, Object>> getProfileActivity(@PathVariable String identifier) {
+        return ResponseEntity.ok(profileService.getProfileActivity(identifier));
+    }
+
     @PostMapping("/{userId}/experience")
     public ResponseEntity<Experience> addExperience(@PathVariable Long userId,
                                                     @RequestBody Experience experience) {

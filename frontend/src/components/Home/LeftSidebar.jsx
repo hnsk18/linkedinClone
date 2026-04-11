@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { FaBookmark, FaUsers, FaNewspaper, FaCalendarAlt } from 'react-icons/fa';
+import { FaBookmark } from 'react-icons/fa';
 import './LeftSidebar.css';
+
+const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
 const LeftSidebar = () => {
     const [me, setMe] = useState(null);
@@ -22,7 +24,7 @@ const LeftSidebar = () => {
                 return;
             }
             try {
-                const res = await fetch("http://localhost:8080/api/users/me", {
+                const res = await fetch(`${API_BASE}/api/users/me`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (!res.ok) {
@@ -81,14 +83,6 @@ const LeftSidebar = () => {
                     <div className="stat-row">
                         <span className="stat-label">Post impressions</span>
                         <span className="stat-value">13</span>
-                    </div>
-                </div>
-
-                <div className="premium-upsell">
-                    <p className="text-sm text-secondary">Strengthen your profile with an AI writing assistant</p>
-                    <div className="flex-align text-bold">
-                        <span className="premium-square"></span>
-                        Try Premium for ₹0
                     </div>
                 </div>
 

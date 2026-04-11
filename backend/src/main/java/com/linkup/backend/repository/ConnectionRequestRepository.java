@@ -15,5 +15,9 @@ public interface ConnectionRequestRepository extends JpaRepository<ConnectionReq
     Optional<ConnectionRequest> findByRequesterIdAndReceiverIdAndStatus(Long requesterId, Long receiverId, ConnectionRequest.Status status);
 
     Optional<ConnectionRequest> findByReceiverIdAndRequesterIdAndStatus(Long receiverId, Long requesterId, ConnectionRequest.Status status);
+
+    List<ConnectionRequest> findByRequesterIdAndStatus(Long requesterId, ConnectionRequest.Status status);
+
+    List<ConnectionRequest> findByRequesterIdAndStatusOrderByCreatedAtDesc(Long requesterId, ConnectionRequest.Status status);
 }
 

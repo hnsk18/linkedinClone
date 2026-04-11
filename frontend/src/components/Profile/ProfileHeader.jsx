@@ -13,6 +13,7 @@ const ProfileHeader = ({
     onEditIntro,
     onOpenModal,
     onOpenConnections,
+    connectionsCount,
     connectionStatus,
     onConnect,
     onMessage,
@@ -22,7 +23,8 @@ const ProfileHeader = ({
     const name = user?.name || 'Your name';
     const headline = user?.headline || 'Add a headline to your profile';
     const location = user?.location || 'Add your location';
-    const connections = user?.connectionsCount ?? 0;
+    const connections = connectionsCount ?? user?.connectionsCount ?? 0;
+    const connectionsLabel = connections === 1 ? '1 connection' : `${connections} connections`;
     const initial = name ? name.charAt(0).toLowerCase() : 'u';
 
     // Get latest experience and education (assuming the array might not be strictly sorted, but taking the first one for now, or you could add basic sorting if needed. Usually backends return latest first or we can just use the first item).
@@ -82,9 +84,13 @@ const ProfileHeader = ({
                         <p className="profile-location">
                             {location} · <a href="#" className="link-blue font-semibold">Contact info</a>
                         </p>
-                        <button type="button" className="link-blue font-semibold mt-1 block profile-connections-link" onClick={onOpenConnections}>
-                            {connections} connections
-                        </button>
+                        {onOpenConnections ? (
+                            <button type="button" className="link-blue font-semibold mt-1 block profile-connections-link" onClick={onOpenConnections}>
+                                {connectionsLabel}
+                            </button>
+                        ) : (
+                            <p className="text-secondary mt-1 mb-0" style={{ fontSize: '0.9rem' }}>{connectionsLabel}</p>
+                        )}
 
                         <div className="profile-action-buttons">
                             {isMyProfile ? (

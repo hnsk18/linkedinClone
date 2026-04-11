@@ -4,15 +4,40 @@ import './ActivityCard.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
-const ActivityCard = ({ user, posts, onPostCreated }) => {
+function firstMediaUrl(mediaUrlsJson) {
+    if (!mediaUrlsJson) return null;
+    try {
+        const arr = JSON.parse(mediaUrlsJson);
+        if (Array.isArray(arr) && arr.length > 0) {
+            const u = arr[0];
+            if (typeof u === 'string') {
+                if (u.startsWith('http') || u.startsWith('/')) return u;
+                return `${API_BASE}${u.startsWith('/') ? '' : '/'}${u}`;
+            }
+        }
+    } catch {
+        /* ignore */
+    }
+    return null;
+}
+
+const ActivityCard = ({ user, posts, activity, onPostCreated }) => {
     const name = user?.name || 'You';
-    const firstPost = posts && posts.length > 0 ? posts[0] : null;
+    const [activeTab, setActiveTab] = useState('posts');
     const [createPostOpen, setCreatePostOpen] = useState(false);
     const [content, setContent] = useState('');
     const [posting, setPosting] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [previewUrls, setPreviewUrls] = useState([]);
     const fileInputRef = useRef(null);
+
+    const followersCount = activity?.followersCount ?? user?.followersCount ?? 0;
+    const postsWithStats = activity?.posts?.length ? activity.posts : null;
+    const videoPosts = activity?.videoPosts || [];
+    const commentFeed = activity?.comments || [];
+
+    const displayPosts = postsWithStats || posts || [];
+    const firstPost = displayPosts.length > 0 ? displayPosts[0] : null;
 
     useEffect(() => {
         const urls = selectedFiles.map((file) => URL.createObjectURL(file));
@@ -46,12 +71,17 @@ const ActivityCard = ({ user, posts, onPostCreated }) => {
         if (!text && selectedFiles.length === 0) return;
         if (posting) return;
 
-        let token = localStorage.getItem('token');
-        if (!token) {
+        let tok = localStorage.getItem('token');
+        if (!tok) {
             alert('Please sign in to post.');
             return;
         }
-        token = token.replace(/^"|"$/g, '');
+        try {
+            tok = JSON.parse(tok);
+        } catch {
+            /* raw string */
+        }
+        tok = String(tok).replace(/^"|"$/g, '');
 
         setPosting(true);
         try {
@@ -62,7 +92,7 @@ const ActivityCard = ({ user, posts, onPostCreated }) => {
                 selectedFiles.forEach((file) => formData.append('files', file));
                 res = await fetch(`${API_BASE}/api/posts`, {
                     method: 'POST',
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: { Authorization: `Bearer ${tok}` },
                     body: formData
                 });
             } else {
@@ -70,7 +100,7 @@ const ActivityCard = ({ user, posts, onPostCreated }) => {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
+                        Authorization: `Bearer ${tok}`
                     },
                     body: JSON.stringify({ content: text })
                 });
@@ -94,13 +124,44 @@ const ActivityCard = ({ user, posts, onPostCreated }) => {
         }
     };
 
+    const renderPostPreview = (p) => {
+        const thumb = firstMediaUrl(p.mediaUrls);
+        const likes = typeof p.likesCount === 'number' ? p.likesCount : null;
+        const comments = typeof p.commentsCount === 'number' ? p.commentsCount : null;
+        return (
+            <div className="activity-post-preview" key={p.id}>
+                <p className="post-meta">
+                    {name} posted this · {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''}
+                </p>
+                <div className="post-summary">
+                    {thumb && (
+                        <img src={thumb} alt="" className="post-thumbnail" />
+                    )}
+                    <div className="post-text">
+                        <p>{(p.content || '').slice(0, 220) || 'Post'}</p>
+                    </div>
+                </div>
+                <div className="post-stats">
+                    <span className="stat-likes">
+                        <FaThumbsUp className="like-icon" />
+                        {likes != null ? ` ${likes}` : ''}
+                    </span>
+                    <span className="stat-comments">
+                        <FaComment className="like-icon" />
+                        {comments != null ? ` ${comments} comments` : ''}
+                    </span>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className="card activity-card">
             <div className="card-content">
                 <div className="activity-header">
                     <div>
                         <h2 className="card-title">Activity</h2>
-                        <a href="#" className="link-blue font-semibold followers-link">54 followers</a>
+                        <span className="link-blue font-semibold followers-link">{followersCount} followers</span>
                     </div>
                     <div className="activity-actions">
                         <button
@@ -110,38 +171,70 @@ const ActivityCard = ({ user, posts, onPostCreated }) => {
                         >
                             Create a post
                         </button>
-                        <button className="icon-btn"><FaPen /></button>
+                        <button type="button" className="icon-btn" aria-label="Edit activity"><FaPen /></button>
                     </div>
                 </div>
 
                 <div className="activity-pills">
-                    <button className="pill-active">Posts</button>
-                    <button className="pill-outline">Comments</button>
-                    <button className="pill-outline">Videos</button>
+                    <button
+                        type="button"
+                        className={activeTab === 'posts' ? 'pill-active' : 'pill-outline'}
+                        onClick={() => setActiveTab('posts')}
+                    >
+                        Posts
+                    </button>
+                    <button
+                        type="button"
+                        className={activeTab === 'comments' ? 'pill-active' : 'pill-outline'}
+                        onClick={() => setActiveTab('comments')}
+                    >
+                        Comments
+                    </button>
+                    <button
+                        type="button"
+                        className={activeTab === 'videos' ? 'pill-active' : 'pill-outline'}
+                        onClick={() => setActiveTab('videos')}
+                    >
+                        Videos
+                    </button>
                 </div>
 
-                {firstPost ? (
-                    <div className="activity-post-preview">
-                        <p className="post-meta">
-                            {name} posted this · {new Date(firstPost.createdAt).toLocaleDateString()}
-                        </p>
-                        <div className="post-summary">
-                            <div className="post-text">
-                                <p>{firstPost.content?.slice(0, 120) || 'Post content'}</p>
+                {activeTab === 'posts' && (
+                    <>
+                        {firstPost ? (
+                            renderPostPreview(firstPost)
+                        ) : (
+                            <div className="activity-post-preview">
+                                <p className="post-meta">{name} has not posted yet.</p>
                             </div>
-                        </div>
-                        <div className="post-stats">
-                            <span className="stat-likes">
-                                <FaThumbsUp className="like-icon" /> {/* likes not tracked yet */}
-                            </span>
-                            <span className="stat-comments">
-                                <FaComment className="like-icon" /> {/* comments not tracked yet */}
-                            </span>
-                        </div>
+                        )}
+                    </>
+                )}
+
+                {activeTab === 'comments' && (
+                    <div className="activity-comments-list">
+                        {commentFeed.length === 0 ? (
+                            <p className="post-meta">No comments yet.</p>
+                        ) : (
+                            commentFeed.map((c) => (
+                                <div key={c.id} className="activity-comment-item">
+                                    <p className="post-meta">
+                                        Comment on post #{c.postId} · {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : ''}
+                                    </p>
+                                    <p>{(c.content || '').slice(0, 200)}</p>
+                                </div>
+                            ))
+                        )}
                     </div>
-                ) : (
-                    <div className="activity-post-preview">
-                        <p className="post-meta">{name} has not posted yet.</p>
+                )}
+
+                {activeTab === 'videos' && (
+                    <div className="activity-videos-list">
+                        {videoPosts.length === 0 ? (
+                            <p className="post-meta">No video posts yet.</p>
+                        ) : (
+                            videoPosts.map((p) => renderPostPreview(p))
+                        )}
                     </div>
                 )}
             </div>

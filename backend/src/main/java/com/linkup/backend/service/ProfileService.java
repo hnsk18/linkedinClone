@@ -1,12 +1,17 @@
 package com.linkup.backend.service;
 
+import com.linkup.backend.dto.CommentActivityDto;
+import com.linkup.backend.dto.PostActivityDto;
 import com.linkup.backend.model.*;
 import com.linkup.backend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -39,6 +44,12 @@ public class ProfileService {
 
     @Autowired
     private JobPreferenceRepository jobPreferenceRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private PostReactionRepository postReactionRepository;
 
     private User findUserByIdentifier(String identifier) {
         User user = null;
@@ -90,6 +101,59 @@ public class ProfileService {
         }
 
         return postRepository.findByAuthorEmailOrderByCreatedAtDesc(user.getEmail());
+    }
+
+    private static boolean mediaUrlsHasVideo(String mediaUrls) {
+        if (mediaUrls == null || mediaUrls.isBlank()) {
+            return false;
+        }
+        String u = mediaUrls.toLowerCase(Locale.ROOT);
+        return u.contains(".mp4") || u.contains(".webm") || u.contains(".mov") || u.contains("video/");
+    }
+
+    /**
+     * Data for profile Activity: followers, posts with like/comment counts, user's comments, video posts.
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getProfileActivity(String identifier) {
+        User user = findUserByIdentifier(identifier);
+        if (user.getEmail() == null) {
+            throw new RuntimeException("User email is not set");
+        }
+
+        List<Post> rawPosts = postRepository.findByAuthorEmailOrderByCreatedAtDesc(user.getEmail());
+
+        List<PostActivityDto> posts = rawPosts.stream()
+                .map(p -> {
+                    long likes = postReactionRepository.countByPostIdAndType(p.getId(), "LIKE");
+                    long comments = commentRepository.countByPost_Id(p.getId());
+                    boolean video = mediaUrlsHasVideo(p.getMediaUrls());
+                    return new PostActivityDto(p, likes, comments, video);
+                })
+                .collect(Collectors.toList());
+
+        List<PostActivityDto> videoPosts = posts.stream()
+                .filter(PostActivityDto::isHasVideo)
+                .collect(Collectors.toList());
+
+        List<Comment> recentComments = commentRepository.findByAuthorEmailOrderByCreatedAtDesc(
+                user.getEmail(), PageRequest.of(0, 20));
+        List<CommentActivityDto> commentFeed = recentComments.stream()
+                .map(c -> new CommentActivityDto(
+                        c.getId(),
+                        c.getPost().getId(),
+                        c.getContent(),
+                        c.getCreatedAt()))
+                .collect(Collectors.toList());
+
+        int followers = user.getFollowersCount() != null ? user.getFollowersCount() : 0;
+
+        Map<String, Object> out = new HashMap<>();
+        out.put("followersCount", followers);
+        out.put("posts", posts);
+        out.put("videoPosts", videoPosts);
+        out.put("comments", commentFeed);
+        return out;
     }
 
     public Experience addExperience(Long userId, Experience experience) {

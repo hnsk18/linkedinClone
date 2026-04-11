@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { FaHome, FaUserFriends, FaBriefcase, FaCommentDots, FaBell, FaTh, FaSignOutAlt } from 'react-icons/fa';
 import { BsSearch } from 'react-icons/bs';
 import logo from '../images/logo.svg';
@@ -9,6 +9,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 
 const Navbar = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const getNavLinkClass = ({ isActive }) =>
         `nav-item-main${isActive ? ' active' : ''}`;
 
@@ -23,8 +24,53 @@ const Navbar = () => {
     const token = useMemo(() => {
         let t = localStorage.getItem("token");
         if (!t) return null;
-        return t.replace(/^"|"$/g, "");
+        try {
+            t = JSON.parse(t);
+        } catch (e) {
+            /* raw string */
+        }
+        const s = String(t).replace(/^"|"$/g, "").trim();
+        return s || null;
     }, []);
+
+    const [notifUnread, setNotifUnread] = useState(0);
+    const [meInitial, setMeInitial] = useState("?");
+
+    useEffect(() => {
+        if (!token) {
+            setNotifUnread(0);
+            return;
+        }
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/notifications/unread-count`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) {
+                    const d = await res.json();
+                    setNotifUnread(typeof d.count === "number" ? d.count : 0);
+                }
+            } catch (e) {
+                /* ignore */
+            }
+        })();
+    }, [token, location.pathname]);
+
+    useEffect(() => {
+        if (!token) return;
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/users/me`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (!res.ok) return;
+                const u = await res.json();
+                setMeInitial((u?.name || u?.email || "?").trim().charAt(0).toLowerCase());
+            } catch (e) {
+                /* ignore */
+            }
+        })();
+    }, [token]);
 
     const handleLogout = () => {
         setShowLogoutModal(true);
@@ -176,14 +222,16 @@ const Navbar = () => {
                         <NavLink to="/notifications" className={getNavLinkClass}>
                             <div className="nav-icon-badge">
                                 <FaBell size={24} />
-                                <span className="badge">10</span>
+                                {notifUnread > 0 && (
+                                    <span className="badge">{notifUnread > 99 ? "99+" : notifUnread}</span>
+                                )}
                             </div>
                             <span>Notifications</span>
                         </NavLink>
                     </li>
                     <li>
                         <NavLink to="/profile" className={getNavLinkClass}>
-                            <div className="me-avatar">h</div>
+                            <div className="me-avatar">{meInitial}</div>
                             <span>Me ▼</span>
                         </NavLink>
                     </li>

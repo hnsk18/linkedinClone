@@ -8,6 +8,10 @@
     align-self: flex-start;
 }
 
+.home-sidebar-footer-card .right-sidebar-footer {
+    padding-top: 8px;
+}
+
 @media (max-width: 992px) {
     .home-left-sidebar,
     .home-right-sidebar {

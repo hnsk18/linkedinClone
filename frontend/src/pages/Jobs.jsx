@@ -66,7 +66,7 @@ export default function Jobs() {
       title: "Enterprise Account Manager",
       location: "Luxor • Vijayawada (Remote)",
       postedTime: "3 weeks ago",
-      badge: "Promoted",
+      badge: "Easy Apply",
       logo: "🟡"
     }
   ];

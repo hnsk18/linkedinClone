@@ -42,7 +42,9 @@ public class PostReactionController {
         try {
             String token = authHeader.substring(7);
             String email = jwtUtil.extractEmail(token);
-            User user = userRepository.findByEmail(email);
+            User user = (email != null && !email.isBlank())
+                    ? userRepository.findByEmailIgnoreCase(email.trim())
+                    : null;
             String name = (user != null) ? user.getName() : null;
 
             reactionService.setReaction(postId, email, name, body != null ? body.type : null);

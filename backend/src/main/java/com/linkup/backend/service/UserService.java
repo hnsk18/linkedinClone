@@ -10,6 +10,12 @@ import java.util.UUID;
 @Service
 public class UserService {
 
+    public record LoginResult(User user, String errorMessage) {
+        public boolean ok() {
+            return user != null;
+        }
+    }
+
     @Autowired
     private UserRepository userRepository;
 
@@ -38,48 +44,62 @@ public class UserService {
             user.setUsername(base + "-" + UUID.randomUUID().toString().substring(0, 6));
         }
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        String plain = user.getPassword() == null ? "" : user.getPassword().trim();
+        if (plain.isEmpty()) {
+            throw new RuntimeException("Password is required");
+        }
+        user.setPassword(passwordEncoder.encode(plain));
 
         return userRepository.save(user);
     }
 
-    // LOGIN
-    public User login(String email, String password){
+    /**
+     * Login: {@code identifier} is email (any case) or username.
+     * Returns a clear error message for debugging (not for production hardening).
+     */
+    public LoginResult attemptLogin(String emailOrUsername, String password) {
 
-        if (email == null || password == null) {
-            return null;
+        if (emailOrUsername == null || password == null) {
+            return new LoginResult(null, "Email and password are required.");
         }
 
-        String normalizedEmail = email.trim().toLowerCase();
-        String rawPassword = password;
+        String id = emailOrUsername.trim();
+        String rawPassword = password.trim();
+        if (id.isEmpty() || rawPassword.isEmpty()) {
+            return new LoginResult(null, "Email and password are required.");
+        }
 
-        User user = userRepository.findByEmailIgnoreCase(normalizedEmail);
+        User user = userRepository.findByEmailIgnoreCase(id.toLowerCase());
+        if (user == null) {
+            user = userRepository.findByUsernameIgnoreCase(id).orElse(null);
+        }
 
-        if(user == null){
-            return null;
+        if (user == null) {
+            return new LoginResult(null,
+                    "No account found for that email or username. Register first or check spelling.");
         }
 
         String stored = user.getPassword();
-        if (stored == null) {
-            return null;
+        if (stored == null || stored.isBlank()) {
+            return new LoginResult(null, "This account has no password set. Register again or reset in the database.");
         }
+        stored = stored.trim();
 
         boolean looksBcrypt = stored.startsWith("$2a$") || stored.startsWith("$2b$") || stored.startsWith("$2y$");
         if (looksBcrypt) {
             if (!passwordEncoder.matches(rawPassword, stored)) {
-                return null;
+                return new LoginResult(null,
+                        "Wrong password. Use the password you chose at sign-up (not the long hash from the database).");
             }
         } else {
-            // Backward-compatible login for older plaintext-stored passwords.
-            // If it matches, upgrade it to bcrypt.
             if (!stored.equals(rawPassword)) {
-                return null;
+                return new LoginResult(null, "Wrong password.");
             }
             user.setPassword(passwordEncoder.encode(rawPassword));
             userRepository.save(user);
         }
 
-        return user;
+        return new LoginResult(user, null);
     }
 
     public User updateIntro(Long userId, User patch) {

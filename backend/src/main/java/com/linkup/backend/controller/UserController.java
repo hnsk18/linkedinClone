@@ -49,14 +49,15 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody User user) {
 
-        User loggedUser = userService.login(
+        UserService.LoginResult result = userService.attemptLogin(
                 user != null ? user.getEmail() : null,
                 user != null ? user.getPassword() : null);
 
-        if (loggedUser == null) {
-            return ResponseEntity.status(401).body("Invalid email or password");
+        if (!result.ok()) {
+            return ResponseEntity.status(401).body(result.errorMessage());
         }
 
+        User loggedUser = result.user();
         String token = jwtUtil.generateToken(loggedUser.getEmail());
 
         return ResponseEntity.ok()
@@ -76,13 +77,31 @@ public class UserController {
             @PathVariable Long userId,
             @RequestParam("file") MultipartFile file,
             @RequestParam("type") String type,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             HttpServletRequest request) {
-        
-        User user = userRepository.findById(userId).orElse(null);
-        if (user == null) {
-            return ResponseEntity.status(404).body("User not found");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body("Missing or invalid token");
         }
-        
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body("File is required");
+        }
+
+        final User user;
+        try {
+            String tokenEmail = jwtUtil.extractEmail(authHeader.substring(7)).trim().toLowerCase();
+            User owner = userRepository.findById(userId).orElse(null);
+            if (owner == null) {
+                return ResponseEntity.status(404).body("User not found");
+            }
+            if (owner.getEmail() == null || !owner.getEmail().trim().toLowerCase().equals(tokenEmail)) {
+                return ResponseEntity.status(403).body("You can only update your own photos");
+            }
+            user = owner;
+        } catch (Exception e) {
+            return ResponseEntity.status(401).body("Invalid token");
+        }
+
         try {
             String dirPath = "uploads";
             File dir = new File(dirPath);
@@ -127,7 +146,10 @@ public class UserController {
         try {
             String token = authHeader.substring(7);
             String email = jwtUtil.extractEmail(token);
-            User user = userRepository.findByEmail(email);
+            if (email == null || email.isBlank()) {
+                return ResponseEntity.status(401).body("Invalid token");
+            }
+            User user = userRepository.findByEmailIgnoreCase(email.trim());
             if (user == null) {
                 return ResponseEntity.status(404).body("User not found");
             }

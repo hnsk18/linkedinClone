@@ -20,6 +20,8 @@ public class User {
     @Column(unique = true)
     private String username;
 
+    /** Bcrypt hashes are ~60 chars; keep enough room so hashes are never truncated. */
+    @Column(length = 255)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
@@ -40,6 +42,9 @@ public class User {
 
     private Integer connectionsCount;
 
+    /** Shown on profile Activity (followers); can be wired to a follow feature later. */
+    private Integer followersCount;
+
     private LocalDateTime createdAt;
 
     public User() {}
@@ -51,6 +56,9 @@ public class User {
         }
         if (connectionsCount == null) {
             connectionsCount = 0;
+        }
+        if (followersCount == null) {
+            followersCount = 0;
         }
     }
 
@@ -148,6 +156,14 @@ public class User {
 
     public void setConnectionsCount(Integer connectionsCount) {
         this.connectionsCount = connectionsCount;
+    }
+
+    public Integer getFollowersCount() {
+        return followersCount;
+    }
+
+    public void setFollowersCount(Integer followersCount) {
+        this.followersCount = followersCount;
     }
 
     public LocalDateTime getCreatedAt() {

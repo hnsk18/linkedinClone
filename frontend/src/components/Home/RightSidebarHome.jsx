@@ -1,13 +1,10 @@
 import React from 'react';
-import { FaInfoCircle, FaChevronRight, FaChevronDown } from 'react-icons/fa';
 import './RightSidebarHome.css';
 
 const RightSidebarHome = () => {
     return (
         <div className="home-right-sidebar">
-
-            <div className="card ad-card-mini">
-                <img src="https://via.placeholder.com/300x250/0A2540/FFFFFF?text=LinkedIn+Ad+Banner" alt="Ad" style={{ width: '100%', height: 'auto', display: 'block' }} />
+            <div className="card home-sidebar-footer-card">
                 <div className="right-sidebar-footer">
                     <ul className="footer-links">
                         <li>About</li>
