@@ -1,6 +1,17 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { FaBookmark } from 'react-icons/fa';
+import { resolveProfileImageUrl } from '../../utils/profileImage';
 import './LeftSidebar.css';
+
+const placeholderLogo =
+    'data:image/svg+xml;charset=UTF-8,' +
+    encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect width="24" height="24" rx="6" fill="#E9EEF3"/>
+            <path d="M6 15.5V8.5C6 7.67157 6.67157 7 7.5 7H16.5C17.3284 7 18 7.67157 18 8.5V15.5C18 16.3284 17.3284 17 16.5 17H7.5C6.67157 17 6 16.3284 6 15.5Z" fill="#C8D2DC"/>
+            <circle cx="10" cy="10" r="1.5" fill="#8FA3B8"/>
+        </svg>
+    `);
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
@@ -54,7 +65,15 @@ const LeftSidebar = () => {
                     ) : me ? (
                         <>
                             <div className="avatar">
-                                <span className="avatar-initial">{me.name ? me.name.charAt(0).toLowerCase() : ''}</span>
+                                {resolveProfileImageUrl(me.profilePicture, API_BASE) ? (
+                                    <img
+                                        src={resolveProfileImageUrl(me.profilePicture, API_BASE)}
+                                        alt=""
+                                        className="avatar-photo"
+                                    />
+                                ) : (
+                                    <span className="avatar-initial">{me.name ? me.name.charAt(0).toLowerCase() : ''}</span>
+                                )}
                                 <div className="opentowork-label">#OPENTOWORK</div>
                             </div>
                             <h2 className="user-name">{me.name} <span className="premium-icon">in</span></h2>
@@ -62,7 +81,7 @@ const LeftSidebar = () => {
                             <p className="user-location text-sm text-secondary">{me.location || 'Add a location'}</p>
                             {me.college && (
                                 <div className="school-info">
-                                    <img src="https://via.placeholder.com/24" alt="School" />
+                                    <img src={placeholderLogo} alt="School" />
                                     <span>{me.college}</span>
                                 </div>
                             )}

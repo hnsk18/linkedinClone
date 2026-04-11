@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaImage, FaVideo, FaNewspaper, FaEllipsisH, FaThumbsUp, FaComment, FaShare, FaPaperPlane, FaGlobe, FaEdit } from 'react-icons/fa';
 import CommentSection from '../Comments/CommentSection';
 import { jwtDecode } from 'jwt-decode';
+import { resolveProfileImageUrl } from '../../utils/profileImage';
 import './MainFeed.css';
 
 function formatRelativeTime(isoString) {
@@ -25,6 +27,16 @@ function formatRelativeTime(isoString) {
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080';
 
+function ProfileAvatar({ pictureUrl, name, email, className }) {
+    const src = resolveProfileImageUrl(pictureUrl, API_BASE);
+    const initial = (name || email || '?').toString().trim().charAt(0).toLowerCase() || '?';
+    return (
+        <div className={className}>
+            {src ? <img src={src} alt="" /> : initial}
+        </div>
+    );
+}
+
 const REACTIONS = [
     { type: 'LIKE', label: 'Like', emoji: '👍', color: '#0A66C2' },
     { type: 'CELEBRATE', label: 'Celebrate', emoji: '👏', color: '#057642' },
@@ -43,6 +55,18 @@ function getAuthToken() {
     let token = localStorage.getItem('token');
     if (!token) return null;
     return token.replace(/^"|"$/g, '');
+}
+
+function isTokenUsable(token) {
+    if (!token) return false;
+    try {
+        const parts = token.split('.');
+        if (parts.length !== 3) return false;
+        jwtDecode(token);
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 function authHeaders() {
@@ -87,6 +111,7 @@ function PostText({ text, expanded, onToggle }) {
 }
 
 const MainFeed = ({ posts = [], onPostCreated }) => {
+    const navigate = useNavigate();
     const [content, setContent] = useState('');
     const [posting, setPosting] = useState(false);
     const [selectedFiles, setSelectedFiles] = useState([]);
@@ -107,10 +132,17 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
     const [repostThoughts, setRepostThoughts] = useState('');
     const [reposting, setReposting] = useState(false);
 
+    const [sendModalPost, setSendModalPost] = useState(null);
+    const [sendConnections, setSendConnections] = useState([]);
+    const [sendConnectionsLoading, setSendConnectionsLoading] = useState(false);
+    const [sendConnectionsError, setSendConnectionsError] = useState(null);
+    const [sendConnectionFilter, setSendConnectionFilter] = useState('');
+
     // Comment section state
     const [commentSectionOpen, setCommentSectionOpen] = useState(null);
     const [currentUserEmail, setCurrentUserEmail] = useState(null);
     const [expandedByPostId, setExpandedByPostId] = useState({});
+    const [me, setMe] = useState(null);
 
     useEffect(() => {
         const token = getAuthToken();
@@ -122,6 +154,21 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                 console.error('Failed to decode token:', err);
             }
         }
+    }, []);
+
+    useEffect(() => {
+        const token = getAuthToken();
+        if (!token) return;
+        (async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/users/me`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                if (res.ok) setMe(await res.json());
+            } catch (_) {
+                /* ignore */
+            }
+        })();
     }, []);
 
     const openCreatePost = () => setCreatePostOpen(true);
@@ -251,7 +298,7 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
 
     const setReaction = async (postId, type) => {
         const token = getAuthToken();
-        if (!token) {
+        if (!isTokenUsable(token)) {
             alert('Please sign in to react.');
             return;
         }
@@ -367,9 +414,54 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
         } catch (e) { console.error(e); alert('Failed to repost'); } finally { setReposting(false); }
     };
 
-    const handleSendPost = (post) => {
+    const closeSendModal = () => {
+        setSendModalPost(null);
+        setSendConnections([]);
+        setSendConnectionsError(null);
+        setSendConnectionFilter('');
+    };
+
+    const openSendModal = (post) => {
+        if (!post?.id) return;
+        const token = getAuthToken();
+        if (!token) {
+            alert('Please sign in to send a post to your connections.');
+            return;
+        }
+        setSendModalPost(post);
+        setSendConnectionsLoading(true);
+        setSendConnectionsError(null);
+        setSendConnectionFilter('');
+        fetch(`${API_BASE}/api/connections/list`, { headers: { Authorization: `Bearer ${token}` } })
+            .then(async (res) => {
+                if (!res.ok) {
+                    const t = await res.text();
+                    throw new Error(t || `Failed to load connections (${res.status})`);
+                }
+                return res.json();
+            })
+            .then((data) => {
+                setSendConnections(Array.isArray(data) ? data : []);
+            })
+            .catch((err) => {
+                console.error(err);
+                setSendConnectionsError(err.message || 'Could not load connections');
+                setSendConnections([]);
+            })
+            .finally(() => setSendConnectionsLoading(false));
+    };
+
+    const copyPostLink = (post) => {
         const url = `${window.location.origin}/post/${post.id}`;
         navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard')).catch(() => alert('Failed to copy'));
+    };
+
+    const sendToConnection = (conn) => {
+        if (!sendModalPost?.id || !conn?.email) return;
+        const url = `${window.location.origin}/post/${sendModalPost.id}`;
+        const prefill = `Check out this post: ${url}`;
+        closeSendModal();
+        navigate(`/messaging?toEmail=${encodeURIComponent(conn.email)}&prefill=${encodeURIComponent(prefill)}`);
     };
 
     const postsMap = React.useMemo(() => {
@@ -378,12 +470,23 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
         return m;
     }, [posts]);
 
+    const filteredSendConnections = React.useMemo(() => {
+        const q = sendConnectionFilter.trim().toLowerCase();
+        if (!q) return sendConnections;
+        return sendConnections.filter((c) => {
+            const blob = [c.name, c.email, c.headline, c.location, c.username].filter(Boolean).join(' ').toLowerCase();
+            return blob.includes(q);
+        });
+    }, [sendConnections, sendConnectionFilter]);
+
+    const canReact = isTokenUsable(getAuthToken());
+
     return (
         <div className="main-feed-container">
             {/* Start a Post Card */}
             <div className="card start-post-card">
                 <div className="start-post-top">
-                    <div className="me-avatar-medium">h</div>
+                    <ProfileAvatar className="me-avatar-medium" pictureUrl={me?.profilePicture} name={me?.name} email={me?.email} />
                     <textarea
                         className="start-post-input"
                         placeholder="Start a post, try writing with AI"
@@ -424,7 +527,7 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                             />
                             <div className="create-post-modal-header">
                                 <div className="create-post-modal-user">
-                                    <div className="me-avatar-medium">h</div>
+                                    <ProfileAvatar className="me-avatar-medium" pictureUrl={me?.profilePicture} name={me?.name} email={me?.email} />
                                     <div>
                                         <h4 className="create-post-modal-title" id="create-post-modal-title">Post to Anyone</h4>
                                     </div>
@@ -486,7 +589,7 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                     <div className="repost-thoughts-modal" onMouseDown={(e) => e.stopPropagation()}>
                         <div className="repost-thoughts-modal-header">
                             <div className="repost-thoughts-modal-user">
-                                <div className="me-avatar-medium">h</div>
+                                <ProfileAvatar className="me-avatar-medium" pictureUrl={me?.profilePicture} name={me?.name} email={me?.email} />
                                 <div>
                                     <h4 className="repost-thoughts-modal-title" id="repost-modal-title">Post to Anyone</h4>
                                 </div>
@@ -504,7 +607,12 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                             <div className="repost-embedded-card">
                                 <div className="post-header repost-embedded-header">
                                     <div className="post-author-info">
-                                        <div className="author-avatar" />
+                                        <ProfileAvatar
+                                            className="author-avatar"
+                                            pictureUrl={repostThoughtsModal.originalPost.authorProfilePicture}
+                                            name={repostThoughtsModal.originalPost.authorName}
+                                            email={repostThoughtsModal.originalPost.authorEmail}
+                                        />
                                         <div className="author-details">
                                             <h4>{repostThoughtsModal.originalPost.authorName || repostThoughtsModal.originalPost.authorEmail || 'Unknown'}</h4>
                                             <span className="post-meta">
@@ -574,7 +682,12 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                                         <ul className="reactions-list">
                                             {modalItems.map((it, idx) => (
                                                 <li className="reactions-list-item" key={`${it.userEmail}-${idx}`}>
-                                                    <div className="reactions-list-avatar" />
+                                                    <ProfileAvatar
+                                                        className="reactions-list-avatar"
+                                                        pictureUrl={it.userProfilePicture}
+                                                        name={it.userName}
+                                                        email={it.userEmail}
+                                                    />
                                                     <div className="reactions-list-text">
                                                         <div className="reactions-list-name">{it.userName || it.userEmail}</div>
                                                         <div className="reactions-list-sub">{it.userEmail}</div>
@@ -597,7 +710,12 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                     {/* Layout differs for simple repost vs repost with thoughts */}
                     {isRepost && !hasRepostThoughts && (
                         <div className="repost-indicator">
-                            <div className="repost-indicator-avatar">h</div>
+                            <ProfileAvatar
+                                className="repost-indicator-avatar"
+                                pictureUrl={post.authorProfilePicture}
+                                name={post.authorName}
+                                email={post.authorEmail}
+                            />
                             <span>{post.authorName || post.authorEmail || 'Unknown'} reposted this</span>
                         </div>
                     )}
@@ -607,7 +725,12 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                             {/* Reposter header and their thoughts */}
                             <div className="post-header">
                                 <div className="post-author-info">
-                                    <div className="author-avatar" />
+                                    <ProfileAvatar
+                                        className="author-avatar"
+                                        pictureUrl={post.authorProfilePicture}
+                                        name={post.authorName}
+                                        email={post.authorEmail}
+                                    />
                                     <div className="author-details">
                                         <h4>{post.authorName || post.authorEmail || 'Unknown'}</h4>
                                         <span className="post-meta">
@@ -634,7 +757,12 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                                 <div className="repost-embedded-card">
                                     <div className="post-header repost-embedded-header">
                                         <div className="post-author-info">
-                                            <div className="author-avatar" />
+                                            <ProfileAvatar
+                                                className="author-avatar"
+                                                pictureUrl={originalPost.authorProfilePicture}
+                                                name={originalPost.authorName}
+                                                email={originalPost.authorEmail}
+                                            />
                                             <div className="author-details">
                                                 <h4>{originalPost.authorName || originalPost.authorEmail || 'Unknown'}</h4>
                                                 <span className="post-meta">
@@ -706,7 +834,12 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                         <>
                             <div className="post-header">
                                 <div className="post-author-info">
-                                    <div className="author-avatar" />
+                                    <ProfileAvatar
+                                        className="author-avatar"
+                                        pictureUrl={(isRepost ? originalPost : post).authorProfilePicture}
+                                        name={(isRepost ? originalPost : post).authorName}
+                                        email={(isRepost ? originalPost : post).authorEmail}
+                                    />
                                     <div className="author-details">
                                         <h4>{(isRepost ? originalPost : post).authorName || (isRepost ? originalPost : post).authorEmail || 'Unknown'}</h4>
                                         <span className="post-meta">
@@ -822,6 +955,7 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                                                     className="reaction-picker-btn"
                                                     title={r.label}
                                                     onClick={() => setReaction(post.id, r.type)}
+                                                    disabled={!canReact}
                                                 >
                                                     <span className="reaction-picker-emoji" aria-hidden="true">{r.emoji}</span>
                                                 </button>
@@ -832,6 +966,7 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
                                         type="button"
                                         className="post-action-btn"
                                         onClick={() => (myType ? setReaction(post.id, 'NONE') : setReaction(post.id, 'LIKE'))}
+                                        disabled={!canReact}
                                         style={meta ? { color: meta.color } : undefined}
                                     >
                                         {meta ? <span className="like-emoji" aria-hidden="true">{meta.emoji}</span> : <FaThumbsUp />}
@@ -873,19 +1008,7 @@ const MainFeed = ({ posts = [], onPostCreated }) => {
             })}
 
             {/* Feed Post: Job Hiring Ad Box Placeholder matching Screenshot */}
-            <div className="card post-card" style={{ padding: '16px' }}>
-                <div className="flex-between">
-                    <div>
-                        <h3 className="text-bold text-lg mb-1">See who's hiring</h3>
-                        <p className="text-secondary">hemanth, find a company that needs your skills</p>
-                        <button className="btn-primary mt-2" style={{ borderRadius: 24, padding: '4px 16px' }}>Search jobs</button>
-                    </div>
-                    <div className="jobs-circle-icon">
-                        <span className="jobs-suitcase">💼</span>
-                        <span className="jobs-badge">Jobs</span>
-                    </div>
-                </div>
-            </div>
+            
 
             {/* Comment Section Sidebar */}
             {commentSectionOpen && currentUserEmail && (

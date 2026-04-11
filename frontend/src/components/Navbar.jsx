@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { FaHome, FaUserFriends, FaBriefcase, FaCommentDots, FaBell, FaTh, FaSignOutAlt } from 'react-icons/fa';
+import { FaHome, FaUserFriends, FaCommentDots, FaBell, FaTh, FaSignOutAlt } from 'react-icons/fa';
 import { BsSearch } from 'react-icons/bs';
 import logo from '../images/logo.svg';
+import { resolveProfileImageUrl } from '../utils/profileImage';
 import './Navbar.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
@@ -35,6 +36,7 @@ const Navbar = () => {
 
     const [notifUnread, setNotifUnread] = useState(0);
     const [meInitial, setMeInitial] = useState("?");
+    const [meProfilePicture, setMeProfilePicture] = useState(null);
 
     useEffect(() => {
         if (!token) {
@@ -57,7 +59,10 @@ const Navbar = () => {
     }, [token, location.pathname]);
 
     useEffect(() => {
-        if (!token) return;
+        if (!token) {
+            setMeProfilePicture(null);
+            return;
+        }
         (async () => {
             try {
                 const res = await fetch(`${API_BASE}/api/users/me`, {
@@ -66,6 +71,7 @@ const Navbar = () => {
                 if (!res.ok) return;
                 const u = await res.json();
                 setMeInitial((u?.name || u?.email || "?").trim().charAt(0).toLowerCase());
+                setMeProfilePicture(u?.profilePicture || null);
             } catch (e) {
                 /* ignore */
             }
@@ -178,7 +184,11 @@ const Navbar = () => {
                                         role="option"
                                     >
                                         <div className="search-avatar">
-                                            {(u?.name?.[0] || "U").toUpperCase()}
+                                            {resolveProfileImageUrl(u.profilePicture, API_BASE) ? (
+                                                <img src={resolveProfileImageUrl(u.profilePicture, API_BASE)} alt="" />
+                                            ) : (
+                                                (u?.name?.[0] || "U").toUpperCase()
+                                            )}
                                         </div>
                                         <div className="search-meta">
                                             <div className="search-name">{u.name || u.email || "Unknown"}</div>
@@ -207,12 +217,6 @@ const Navbar = () => {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to="/jobs" className={getNavLinkClass}>
-                            <FaBriefcase size={24} />
-                            <span>Jobs</span>
-                        </NavLink>
-                    </li>
-                    <li>
                         <NavLink to="/messaging" className={getNavLinkClass}>
                             <FaCommentDots size={24} />
                             <span>Messaging</span>
@@ -231,7 +235,13 @@ const Navbar = () => {
                     </li>
                     <li>
                         <NavLink to="/profile" className={getNavLinkClass}>
-                            <div className="me-avatar">{meInitial}</div>
+                            <div className="me-avatar">
+                                {resolveProfileImageUrl(meProfilePicture, API_BASE) ? (
+                                    <img src={resolveProfileImageUrl(meProfilePicture, API_BASE)} alt="" />
+                                ) : (
+                                    meInitial
+                                )}
+                            </div>
                             <span>Me ▼</span>
                         </NavLink>
                     </li>

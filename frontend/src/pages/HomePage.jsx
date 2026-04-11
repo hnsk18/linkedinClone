@@ -16,11 +16,14 @@ const HomePage = () => {
     // so the scroll handler doesn't double-fire. UseRef holds the latest values.
     const isLoadingRef = React.useRef(false);
     const seenPostsRef = React.useRef(new Set());
+    const nextPageRef = React.useRef(0);
+    const hasMoreRef = React.useRef(true);
     
     const size = 10;
 
     const loadFeed = (isInitial = false) => {
         if (isLoadingRef.current) return;
+        if (!isInitial && !hasMoreRef.current) return;
 
         isLoadingRef.current = true;
         setIsLoading(true);
@@ -28,9 +31,13 @@ const HomePage = () => {
 
         if (isInitial) {
             seenPostsRef.current = new Set();
+            nextPageRef.current = 0;
+            hasMoreRef.current = true;
         }
 
-        fetch(`${API_BASE}/api/posts/feed?size=${size}`)
+        const page = nextPageRef.current;
+
+        fetch(`${API_BASE}/api/posts/feed?size=${size}&page=${page}`)
             .then(res => {
                 if (!res.ok) throw new Error(`Feed failed: ${res.status}`);
                 return res.json();
@@ -51,6 +58,12 @@ const HomePage = () => {
                     setPosts(uniquePosts);
                 } else {
                     setPosts(prev => [...prev, ...uniquePosts]);
+                }
+                if (uniquePosts.length > 0) {
+                    nextPageRef.current = page + 1;
+                }
+                if (uniquePosts.length < size) {
+                    hasMoreRef.current = false;
                 }
             })
             .catch(err => {

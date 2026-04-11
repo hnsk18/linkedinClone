@@ -4,6 +4,17 @@ import { MdVerified } from 'react-icons/md';
 import { FaPen, FaCamera } from 'react-icons/fa';
 import AddProfileSectionModal from './AddProfileSectionModal';
 
+const placeholderLogo =
+    'data:image/svg+xml;charset=UTF-8,' +
+    encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="#E9EEF3"/>
+            <path d="M8 21.5V10.5C8 9.67157 8.67157 9 9.5 9H22.5C23.3284 9 24 9.67157 24 10.5V21.5C24 22.3284 23.3284 23 22.5 23H9.5C8.67157 23 8 22.3284 8 21.5Z" fill="#C8D2DC"/>
+            <circle cx="13" cy="14" r="2" fill="#8FA3B8"/>
+            <path d="M9 20L13 16.5C13.5523 15.9893 14.3977 15.9893 14.95 16.5L17.5 18.75L19.85 16.7C20.3461 16.2661 21.1039 16.2661 21.6 16.7L24 19V22H8V21L9 20Z" fill="#8FA3B8"/>
+        </svg>
+    `);
+
 const ProfileHeader = ({
     user,
     experience,
@@ -136,7 +147,7 @@ const ProfileHeader = ({
                         )}
                         {!latestExperience && !latestEducation && (
                             <div className="company-link" onClick={() => onOpenModal && onOpenModal('education')} style={{ cursor: 'pointer' }}>
-                                <img src="https://via.placeholder.com/32" alt="Add college" />
+                                <img src={placeholderLogo} alt="Add college" />
                                 <span>Add your college or company</span>
                             </div>
                         )}

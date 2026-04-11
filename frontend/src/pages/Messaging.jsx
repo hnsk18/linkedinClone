@@ -70,6 +70,16 @@ export default function Messaging() {
   const [params, setParams] = useSearchParams();
   const toEmail = (params.get("toEmail") || "").trim();
 
+  // Prefill composer when opened from feed "Send" (e.g. ?prefill=...), then strip param from URL
+  useEffect(() => {
+    const prefill = params.get("prefill");
+    if (!toEmail || !prefill) return;
+    setDraft(prefill);
+    const next = new URLSearchParams(params);
+    next.delete("prefill");
+    setParams(next, { replace: true });
+  }, [toEmail, params, setParams]);
+
   const token = useMemo(() => {
     let t = localStorage.getItem("token");
     if (!t) return null;
